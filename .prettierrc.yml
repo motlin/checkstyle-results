@@ -1,16 +1,16 @@
 # See: https://prettier.io/docs/en/configuration
 
-printWidth: 80
+printWidth: 120
 tabWidth: 2
 useTabs: false
-semi: false
-singleQuote: true
+semi: true
+singleQuote: false
 quoteProps: as-needed
 jsxSingleQuote: false
-trailingComma: none
+trailingComma: all
 bracketSpacing: true
-bracketSameLine: true
+bracketSameLine: false
 arrowParens: always
-proseWrap: always
+proseWrap: preserve
 htmlWhitespaceSensitivity: css
 endOfLine: lf
