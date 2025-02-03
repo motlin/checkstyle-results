@@ -1,62 +1,183 @@
-/**
- * Unit tests for the action's main functionality, src/main.ts
- *
- * To mock dependencies in ESM, you can create fixtures that export mock
- * functions and objects. For example, the core module is mocked in this test,
- * so that the actual '@actions/core' module is not imported.
- */
-import { jest } from '@jest/globals'
-import * as core from '../__fixtures__/core.js'
-import { wait } from '../__fixtures__/wait.js'
+// __tests__/main.test.ts
+import { jest, describe, it, expect, beforeEach } from "@jest/globals";
 
-// Mocks should be declared before the module being tested is imported.
-jest.unstable_mockModule('@actions/core', () => core)
-jest.unstable_mockModule('../src/wait.js', () => ({ wait }))
+// Setup ESM mocks using unstable_mockModule
+// This approach works better with ESM modules
 
-// The module being tested should be imported dynamically. This ensures that the
-// mocks are used in place of any actual dependencies.
-const { run } = await import('../src/main.js')
+const coreMock = {
+  debug: jest.fn(),
+  warning: jest.fn(),
+  info: jest.fn(),
+  error: jest.fn(),
+  getInput: jest.fn().mockImplementation(() => "**/fake-checkstyle.xml"),
+  setFailed: jest.fn(),
+  setOutput: jest.fn(),
+  summary: {
+    addRaw: jest.fn().mockReturnThis(),
+    write: jest.fn().mockResolvedValue(undefined),
+  },
+};
 
-describe('main.ts', () => {
-  beforeEach(() => {
-    // Set the action's inputs as return values from core.getInput().
-    core.getInput.mockImplementation(() => '500')
+const globMock = {
+  create: jest.fn().mockImplementation(async () => ({
+    glob: jest.fn().mockResolvedValue(["fake.xml"]),
+    globGenerator: jest.fn(),
+  })),
+};
 
-    // Mock the wait function so that it does not actually wait.
-    wait.mockImplementation(() => Promise.resolve('done!'))
-  })
+const fsMock = {
+  existsSync: jest.fn().mockReturnValue(true),
+  readFileSync: jest.fn().mockReturnValue(`
+    <checkstyle>
+      <file name="SomeFile.java">
+        <error line="10" column="2" severity="error" message="Fake error" source="CheckstyleRule"/>
+      </file>
+    </checkstyle>
+  `),
+};
 
-  afterEach(() => {
-    jest.resetAllMocks()
-  })
+const pathMock = {
+  relative: jest.fn().mockReturnValue("SomeFile.java"),
+};
 
-  it('Sets the time output', async () => {
-    await run()
+const parseStringPromiseMock = jest.fn().mockImplementation(async () => ({
+  checkstyle: {
+    file: [
+      {
+        $: { name: "SomeFile.java" },
+        error: [
+          {
+            $: {
+              line: "10",
+              column: "2",
+              severity: "error",
+              message: "Fake error",
+              source: "CheckstyleRule",
+            },
+          },
+        ],
+      },
+    ],
+  },
+}));
 
-    // Verify the time output was set.
-    expect(core.setOutput).toHaveBeenNthCalledWith(
-      1,
-      'time',
-      // Simple regex to match a time string in the format HH:MM:SS.
-      expect.stringMatching(/^\d{2}:\d{2}:\d{2}/)
-    )
-  })
+const xml2jsMock = {
+  parseStringPromise: parseStringPromiseMock,
+};
 
-  it('Sets a failed status', async () => {
-    // Clear the getInput mock and return an invalid value.
-    core.getInput.mockClear().mockReturnValueOnce('this is not a number')
+// Set up mocks before importing the module
+jest.unstable_mockModule("@actions/core", () => coreMock);
+jest.unstable_mockModule("@actions/glob", () => globMock);
+jest.unstable_mockModule("fs", () => fsMock);
+jest.unstable_mockModule("xml2js", () => xml2jsMock);
+jest.unstable_mockModule("path", () => pathMock);
 
-    // Clear the wait mock and return a rejected promise.
-    wait
-      .mockClear()
-      .mockRejectedValueOnce(new Error('milliseconds is not a number'))
+// Dynamically import the module under test after mocks are set up
+let run;
 
-    await run()
+beforeEach(async () => {
+  // Clear all mocks before each test
+  jest.clearAllMocks();
 
-    // Verify that the action was marked as failed.
-    expect(core.setFailed).toHaveBeenNthCalledWith(
-      1,
-      'milliseconds is not a number'
-    )
-  })
-})
+  // Dynamically import the module to ensure mocks are applied
+  const mainModule = await import("../src/main.js");
+  run = mainModule.run;
+});
+
+describe("Checkstyle logic", () => {
+  it("fails if an 'error' severity is found", async () => {
+    await run();
+    expect(coreMock.setFailed).toHaveBeenCalledWith("Checkstyle reported errors");
+  });
+
+  it("does not fail if no errors are found", async () => {
+    // Override the mock implementation for this test
+    parseStringPromiseMock.mockResolvedValueOnce({
+      checkstyle: {
+        file: [
+          {
+            $: { name: "SomeFile.java" },
+            // No error array
+          },
+        ],
+      },
+    });
+
+    await run();
+    expect(coreMock.setFailed).not.toHaveBeenCalled();
+  });
+
+  it("handles annotation limits correctly", async () => {
+    // Create a mock response with many violations
+    const mockResult = {
+      checkstyle: {
+        file: [
+          {
+            $: { name: "SomeFile.java" },
+            error: [],
+          },
+        ],
+      },
+    };
+
+    // Add 15 errors
+    for (let i = 1; i <= 15; i++) {
+      mockResult.checkstyle.file[0].error.push({
+        $: {
+          line: String(i),
+          column: "1",
+          severity: "error",
+          message: `Error ${i}`,
+        },
+      });
+    }
+
+    // Add 15 warnings
+    for (let i = 1; i <= 15; i++) {
+      mockResult.checkstyle.file[0].error.push({
+        $: {
+          line: String(i),
+          column: "1",
+          severity: "warning",
+          message: `Warning ${i}`,
+        },
+      });
+    }
+
+    // Add 35 notices
+    for (let i = 1; i <= 35; i++) {
+      mockResult.checkstyle.file[0].error.push({
+        $: {
+          line: String(i),
+          column: "1",
+          severity: "info",
+          message: `Info ${i}`,
+        },
+      });
+    }
+
+    parseStringPromiseMock.mockResolvedValueOnce(mockResult);
+
+    await run();
+
+    // Check that we created a summary
+    expect(coreMock.summary.addRaw).toHaveBeenCalled();
+    expect(coreMock.summary.write).toHaveBeenCalled();
+
+    // We should have set failed because there were errors
+    expect(coreMock.setFailed).toHaveBeenCalledWith("Checkstyle reported errors");
+  });
+
+  it("handles malformed XML gracefully", async () => {
+    // Make parseStringPromise throw an error for this test
+    parseStringPromiseMock.mockRejectedValueOnce(new Error("XML parsing error"));
+
+    await run();
+
+    // Should have warned about the malformed XML
+    expect(coreMock.warning).toHaveBeenCalled();
+
+    // Should not have failed the run just because of malformed XML
+    expect(coreMock.setFailed).not.toHaveBeenCalled();
+  });
+});

@@ -1,23 +1,16 @@
-name: The name of your action here
-description: Provide a description here
-author: Your name or organization here
+name: "Checkstyle Reporter"
+description: "Reads Checkstyle XML and emits GitHub error/warning annotations"
+author: "Craig Motlin"
 
-# Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
-  icon: heart
-  color: red
+  icon: "check-square"
+  color: "yellow"
 
-# Define your inputs here.
 inputs:
-  milliseconds:
-    description: Your input description here
-    required: true
-    default: '1000'
-
-# Define your outputs here.
-outputs:
-  time:
-    description: Your output description here
+  checkstyle_files:
+    description: "Glob to locate Checkstyle XML reports (Defaults to **/checkstyle-result.xml)"
+    required: false
+    default: "**/checkstyle-result.xml"
 
 runs:
   using: node20

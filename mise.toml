@@ -1,0 +1,4 @@
+[tools]
+node = "22.13.1"
+"npm:strip-ansi-cli" = "4.0.0"
+pnpm = "10.6.5"
