@@ -1,27 +1,141 @@
-import * as core from '@actions/core'
-import { wait } from './wait.js'
+import * as core from "@actions/core";
+import * as glob from "@actions/glob";
+import * as fs from "fs";
+import * as path from "path";
+import { parseStringPromise } from "xml2js";
 
-/**
- * The main function for the action.
- *
- * @returns Resolves when the action is complete.
- */
 export async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
+    // Example: load input
+    let pattern = core.getInput("checkstyle_files", { required: false });
+    if (!pattern) {
+      pattern = "**/checkstyle-result.xml";
+    }
 
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
+    const globber = await glob.create(pattern);
+    const files = await globber.glob();
 
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    let foundErrors = false;
 
-    // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
+    // Counters for annotations
+    const counters = {
+      errors: 0,
+      warnings: 0,
+      notices: 0,
+      total: 0,
+      skipped: 0,
+    };
+
+    // Limits per severity
+    const limits = {
+      error: 10,
+      warning: 10,
+      notice: 30,
+      total: 50,
+    };
+
+    for (const filePath of files) {
+      core.debug(`Reading Checkstyle file: ${filePath}`);
+      if (!fs.existsSync(filePath)) {
+        core.warning(`File not found: ${filePath}`);
+        continue;
+      }
+
+      let xmlData: string;
+      try {
+        xmlData = fs.readFileSync(filePath, "utf-8");
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
+        core.warning(`Failed to read file: ${filePath}`);
+        continue;
+      }
+
+      let result;
+      try {
+        result = await parseStringPromise(xmlData);
+      } catch (error) {
+        core.warning(
+          `Failed to parse XML in file: ${filePath}. ${error instanceof Error ? error.message : String(error)}`,
+        );
+        continue;
+      }
+
+      const filesInReport = result.checkstyle?.file || [];
+
+      for (const f of filesInReport) {
+        const filename = f.$.name;
+        const errors = f.error || [];
+        for (const e of errors) {
+          const line = e.$.line || 0;
+          const column = e.$.column || 0;
+          const severity = e.$.severity || "error";
+          const msg = e.$.message || "No message provided";
+
+          let command = "error";
+          if (severity.toLowerCase() === "warning") {
+            command = "warning";
+          } else if (severity.toLowerCase() === "info") {
+            command = "notice";
+          }
+          if (severity.toLowerCase() === "error") {
+            foundErrors = true;
+          }
+
+          counters.total++;
+
+          // Check if we're under the total annotation limit
+          if (counters.total <= limits.total) {
+            // Check if we're under the per-severity limit
+            const severityCount =
+              command === "error"
+                ? ++counters.errors
+                : command === "warning"
+                  ? ++counters.warnings
+                  : ++counters.notices;
+
+            const severityLimit =
+              command === "error" ? limits.error : command === "warning" ? limits.warning : limits.notice;
+
+            if (severityCount <= severityLimit) {
+              // Use relative or absolute path as needed
+              const relativePath = path.relative(process.cwd(), filename);
+              core.info(`::${command} file=${relativePath},line=${line},col=${column}::${msg}`);
+            } else {
+              counters.skipped++;
+            }
+          } else {
+            counters.skipped++;
+          }
+        }
+      }
+    }
+
+    // Generate summary if we skipped annotations
+    if (counters.skipped > 0) {
+      const summary = [
+        `## CheckStyle Violations Summary`,
+        ``,
+        `**Total violations found:** ${counters.total}`,
+        `**Violations reported as annotations:** ${counters.total - counters.skipped}`,
+        `**Violations omitted due to GitHub limits:** ${counters.skipped}`,
+        ``,
+        `### Breakdown by severity`,
+        `- Errors: ${counters.errors > limits.error ? limits.error : counters.errors} reported${counters.errors > limits.error ? ` (${counters.errors - limits.error} omitted)` : ""}`,
+        `- Warnings: ${counters.warnings > limits.warning ? limits.warning : counters.warnings} reported${counters.warnings > limits.warning ? ` (${counters.warnings - limits.warning} omitted)` : ""}`,
+        `- Notices: ${counters.notices > limits.notice ? limits.notice : counters.notices} reported${counters.notices > limits.notice ? ` (${counters.notices - limits.notice} omitted)` : ""}`,
+      ].join("\n");
+
+      core.summary.addRaw(summary).write();
+      core.info(
+        `CheckStyle found ${counters.total} violations in total, but only ${counters.total - counters.skipped} were reported as annotations due to GitHub limits.`,
+      );
+    }
+
+    if (foundErrors) {
+      core.setFailed("Checkstyle reported errors");
+    }
   } catch (error) {
     // Fail the workflow run if an error occurs
-    if (error instanceof Error) core.setFailed(error.message)
+    if (error instanceof Error) core.setFailed(error.message);
   }
 }
