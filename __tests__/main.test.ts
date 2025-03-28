@@ -1,8 +1,4 @@
-// __tests__/main.test.ts
 import { jest, describe, it, expect, beforeEach } from "@jest/globals";
-
-// Setup ESM mocks using unstable_mockModule
-// This approach works better with ESM modules
 
 const coreMock = {
   debug: jest.fn(),
@@ -107,6 +103,67 @@ describe("Checkstyle logic", () => {
     expect(coreMock.setFailed).not.toHaveBeenCalled();
   });
 
+  it("formats the annotation title from the source correctly", async () => {
+    // Override the mock with a fully qualified source name to test the formatting
+    parseStringPromiseMock.mockResolvedValueOnce({
+      checkstyle: {
+        file: [
+          {
+            $: { name: "SomeFile.java" },
+            error: [
+              {
+                $: {
+                  line: "10",
+                  column: "2",
+                  severity: "error",
+                  message: "Fake error",
+                  source: "com.puppycrawl.tools.checkstyle.checks.coding.NestedIfDepthCheck",
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    await run();
+
+    // Check that the title is formatted correctly from the source
+    // Should extract the package component and remove "Check" suffix
+    expect(coreMock.info).toHaveBeenCalledWith(expect.stringContaining("title=coding/NestedIfDepth"));
+  });
+
+  it("handles annotations with no source attribute", async () => {
+    // Override the mock with no source attribute
+    parseStringPromiseMock.mockResolvedValueOnce({
+      checkstyle: {
+        file: [
+          {
+            $: { name: "SomeFile.java" },
+            error: [
+              {
+                $: {
+                  line: "10",
+                  column: "2",
+                  severity: "error",
+                  message: "Fake error",
+                  // No source provided
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    await run();
+
+    // Check that an empty title is used when no source is provided
+    expect(coreMock.info).toHaveBeenCalledWith(expect.stringContaining("title="));
+    // The title should be blank but the parameter should exist
+    expect(coreMock.info).not.toHaveBeenCalledWith(expect.stringContaining("title=,"));
+  });
+
   it("handles annotation limits correctly", async () => {
     // Create a mock response with many violations
     const mockResult = {
@@ -128,6 +185,7 @@ describe("Checkstyle logic", () => {
           column: "1",
           severity: "error",
           message: `Error ${i}`,
+          source: `com.puppycrawl.tools.checkstyle.checks.ErrorCheck${i}`,
         },
       });
     }
@@ -140,6 +198,7 @@ describe("Checkstyle logic", () => {
           column: "1",
           severity: "warning",
           message: `Warning ${i}`,
+          source: `com.puppycrawl.tools.checkstyle.checks.WarningCheck${i}`,
         },
       });
     }
@@ -152,6 +211,7 @@ describe("Checkstyle logic", () => {
           column: "1",
           severity: "info",
           message: `Info ${i}`,
+          source: `com.puppycrawl.tools.checkstyle.checks.InfoCheck${i}`,
         },
       });
     }
@@ -179,5 +239,67 @@ describe("Checkstyle logic", () => {
 
     // Should not have failed the run just because of malformed XML
     expect(coreMock.setFailed).not.toHaveBeenCalled();
+  });
+
+  it("generates consolidated violations summary in logs", async () => {
+    // Override path.relative mock to return the exact filenames we pass in
+    pathMock.relative.mockImplementation((_, filename) => filename);
+
+    const mockResult = {
+      checkstyle: {
+        file: [
+          {
+            $: { name: "SomeFile.java" },
+            error: [
+              {
+                $: {
+                  line: "10",
+                  column: "2",
+                  severity: "error",
+                  message: "First error",
+                  source: "com.puppycrawl.tools.checkstyle.checks.FirstRuleCheck",
+                },
+              },
+              {
+                $: {
+                  line: "20",
+                  column: "5",
+                  severity: "warning",
+                  message: "Some warning",
+                  source: "com.puppycrawl.tools.checkstyle.checks.WarningRuleCheck",
+                },
+              },
+            ],
+          },
+          {
+            $: { name: "AnotherFile.java" },
+            error: [
+              {
+                $: {
+                  line: "30",
+                  column: "8",
+                  severity: "error",
+                  message: "Another error",
+                  source: "com.puppycrawl.tools.checkstyle.checks.SecondRuleCheck",
+                },
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    parseStringPromiseMock.mockResolvedValueOnce(mockResult);
+
+    await run();
+
+    // Check that the summary header and footer are logged
+    expect(coreMock.info).toHaveBeenCalledWith("\n=== CheckStyle Violations ===");
+    expect(coreMock.info).toHaveBeenCalledWith("===========================\n");
+
+    // Check for the exact format of the consolidated violations summary
+    expect(coreMock.info).toHaveBeenCalledWith("SomeFile.java:[10,2] (FirstRuleCheck) First error");
+    expect(coreMock.info).toHaveBeenCalledWith("SomeFile.java:[20,5] (WarningRuleCheck) Some warning");
+    expect(coreMock.info).toHaveBeenCalledWith("AnotherFile.java:[30,8] (SecondRuleCheck) Another error");
   });
 });
