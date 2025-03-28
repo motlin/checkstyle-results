@@ -14,7 +14,7 @@ mise:
     mise current
 
 # pnpm run all
-pnpm: mise
+all: mise
     pnpm run all
 
 # Override this with a command called `woof` which notifies you in whatever ways you prefer.
