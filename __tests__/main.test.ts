@@ -107,6 +107,67 @@ describe("Checkstyle logic", () => {
     expect(coreMock.setFailed).not.toHaveBeenCalled();
   });
 
+  it("formats the annotation title from the source correctly", async () => {
+    // Override the mock with a fully qualified source name to test the formatting
+    parseStringPromiseMock.mockResolvedValueOnce({
+      checkstyle: {
+        file: [
+          {
+            $: { name: "SomeFile.java" },
+            error: [
+              {
+                $: {
+                  line: "10",
+                  column: "2",
+                  severity: "error",
+                  message: "Fake error",
+                  source: "com.puppycrawl.tools.checkstyle.checks.coding.NestedIfDepthCheck",
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    await run();
+
+    // Check that the title is formatted correctly from the source
+    // Should extract the package component and remove "Check" suffix
+    expect(coreMock.info).toHaveBeenCalledWith(expect.stringContaining("title=coding/NestedIfDepth"));
+  });
+
+  it("handles annotations with no source attribute", async () => {
+    // Override the mock with no source attribute
+    parseStringPromiseMock.mockResolvedValueOnce({
+      checkstyle: {
+        file: [
+          {
+            $: { name: "SomeFile.java" },
+            error: [
+              {
+                $: {
+                  line: "10",
+                  column: "2",
+                  severity: "error",
+                  message: "Fake error",
+                  // No source provided
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    await run();
+
+    // Check that an empty title is used when no source is provided
+    expect(coreMock.info).toHaveBeenCalledWith(expect.stringContaining("title="));
+    // The title should be blank but the parameter should exist
+    expect(coreMock.info).not.toHaveBeenCalledWith(expect.stringContaining("title=,"));
+  });
+
   it("handles annotation limits correctly", async () => {
     // Create a mock response with many violations
     const mockResult = {
@@ -128,6 +189,7 @@ describe("Checkstyle logic", () => {
           column: "1",
           severity: "error",
           message: `Error ${i}`,
+          source: `com.puppycrawl.tools.checkstyle.checks.ErrorCheck${i}`,
         },
       });
     }
@@ -140,6 +202,7 @@ describe("Checkstyle logic", () => {
           column: "1",
           severity: "warning",
           message: `Warning ${i}`,
+          source: `com.puppycrawl.tools.checkstyle.checks.WarningCheck${i}`,
         },
       });
     }
@@ -152,6 +215,7 @@ describe("Checkstyle logic", () => {
           column: "1",
           severity: "info",
           message: `Info ${i}`,
+          source: `com.puppycrawl.tools.checkstyle.checks.InfoCheck${i}`,
         },
       });
     }
