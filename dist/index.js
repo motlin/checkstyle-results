@@ -37555,6 +37555,18 @@ async function run() {
             notice: 30,
             total: 50,
         };
+        // Format the title from source: extract last package component and rule name without "Check"
+        function formatRuleTitle(source) {
+            if (source && source.includes(".")) {
+                const parts = source.split(".");
+                const ruleName = parts[parts.length - 1].replace("Check", "");
+                const packageName = parts[parts.length - 2];
+                return `${packageName}/${ruleName}`;
+            }
+            else {
+                return source;
+            }
+        }
         for (const filePath of files) {
             debug(`Reading Checkstyle file: ${filePath}`);
             if (!fs.existsSync(filePath)) {
@@ -37587,6 +37599,7 @@ async function run() {
                     const column = e.$.column || 0;
                     const severity = e.$.severity || "error";
                     const msg = e.$.message || "No message provided";
+                    const source = e.$.source || "";
                     let command = "error";
                     if (severity.toLowerCase() === "warning") {
                         command = "warning";
@@ -37610,7 +37623,8 @@ async function run() {
                         if (severityCount <= severityLimit) {
                             // Use relative or absolute path as needed
                             const relativePath = path.relative(process.cwd(), filename);
-                            info(`::${command} file=${relativePath},line=${line},col=${column}::${msg}`);
+                            const title = formatRuleTitle(source);
+                            info(`::${command} file=${relativePath},line=${line},col=${column},title=${title}::${msg}`);
                         }
                         else {
                             counters.skipped++;
