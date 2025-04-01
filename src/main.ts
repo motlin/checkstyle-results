@@ -6,7 +6,6 @@ import { parseStringPromise } from "xml2js";
 
 export async function run(): Promise<void> {
   try {
-    // Example: load input
     let pattern = core.getInput("checkstyle_files", { required: false });
     if (!pattern) {
       pattern = "**/checkstyle-result.xml";
@@ -17,7 +16,6 @@ export async function run(): Promise<void> {
 
     let foundErrors = false;
 
-    // Counters for annotations
     const counters = {
       errors: 0,
       warnings: 0,
@@ -26,7 +24,6 @@ export async function run(): Promise<void> {
       skipped: 0,
     };
 
-    // Limits per severity
     const limits = {
       error: 10,
       warning: 10,
@@ -34,7 +31,15 @@ export async function run(): Promise<void> {
       total: 50,
     };
 
-    // Format the title from source: extract last package component and rule name without "Check"
+    const allViolations: Array<{
+      file: string;
+      line: number;
+      column: number;
+      severity: string;
+      message: string;
+      source: string;
+    }> = [];
+
     function formatRuleTitle(source: string): string {
       if (source && source.includes(".")) {
         const parts = source.split(".");
@@ -96,9 +101,16 @@ export async function run(): Promise<void> {
 
           counters.total++;
 
-          // Check if we're under the total annotation limit
+          allViolations.push({
+            file: filename,
+            line: parseInt(line),
+            column: parseInt(column),
+            severity: severity,
+            message: msg,
+            source: source,
+          });
+
           if (counters.total <= limits.total) {
-            // Check if we're under the per-severity limit
             const severityCount =
               command === "error"
                 ? ++counters.errors
@@ -110,7 +122,6 @@ export async function run(): Promise<void> {
               command === "error" ? limits.error : command === "warning" ? limits.warning : limits.notice;
 
             if (severityCount <= severityLimit) {
-              // Use relative or absolute path as needed
               const relativePath = path.relative(process.cwd(), filename);
               const title = formatRuleTitle(source);
               core.info(`::${command} file=${relativePath},line=${line},col=${column},title=${title}::${msg}`);
@@ -124,7 +135,17 @@ export async function run(): Promise<void> {
       }
     }
 
-    // Generate summary if we skipped annotations
+    if (allViolations.length > 0) {
+      core.info("\n=== CheckStyle Violations ===");
+      for (const violation of allViolations) {
+        const relativePath = path.relative(process.cwd(), violation.file);
+        core.info(
+          `${relativePath}:[${violation.line},${violation.column}] (${violation.source.split(".").pop()}) ${violation.message}`,
+        );
+      }
+      core.info("===========================\n");
+    }
+
     if (counters.skipped > 0) {
       const summary = [
         `## CheckStyle Violations Summary`,
@@ -149,7 +170,6 @@ export async function run(): Promise<void> {
       core.setFailed("Checkstyle reported errors");
     }
   } catch (error) {
-    // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message);
   }
 }
