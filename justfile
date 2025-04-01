@@ -13,8 +13,12 @@ mise:
     mise install --quiet
     mise current
 
+# pnpm install
+install:
+    pnpm install
+
 # pnpm run all
-all: mise
+all: mise install
     pnpm run all
 
 # Override this with a command called `woof` which notifies you in whatever ways you prefer.
