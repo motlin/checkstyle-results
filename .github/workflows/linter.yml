@@ -26,7 +26,13 @@ jobs:
     steps:
       - name: Checkout
         id: checkout
+<<<<<<< HEAD
         uses: actions/checkout@v6
+||||||| parent of ca8c0be (chore(deps): bump actions/checkout from 4 to 5)
+        uses: actions/checkout@v4
+=======
+        uses: actions/checkout@v5
+>>>>>>> ca8c0be (chore(deps): bump actions/checkout from 4 to 5)
         with:
           fetch-depth: 0
 
