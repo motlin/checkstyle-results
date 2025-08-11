@@ -31,10 +31,10 @@ export default {
     "^.+\\.ts$": [
       "ts-jest",
       {
-        tsconfig: 'tsconfig.json',
-        useESM: true
-      }
-    ]
+        tsconfig: "tsconfig.json",
+        useESM: true,
+      },
+    ],
   },
   verbose: true,
 };

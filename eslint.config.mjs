@@ -1,14 +1,13 @@
 // See: https://eslint.org/docs/latest/use/configure/configuration-files
 
-import { fixupPluginRules } from '@eslint/compat'
-import { FlatCompat } from '@eslint/eslintrc'
-import js from '@eslint/js'
-import typescriptEslint from '@typescript-eslint/eslint-plugin'
-import tsParser from '@typescript-eslint/parser'
-import _import from 'eslint-plugin-import'
-import jest from 'eslint-plugin-jest'
-import prettier from 'eslint-plugin-prettier'
-import globals from 'globals'
+import { FlatCompat } from "@eslint/eslintrc";
+import js from "@eslint/js";
+import typescriptEslint from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
+import _import from "eslint-plugin-import-x";
+import jest from "eslint-plugin-jest";
+import prettier from "eslint-plugin-prettier";
+import globals from "globals";
 
 const compat = new FlatCompat({
   baseDirectory: import.meta.dirname,
@@ -29,7 +28,7 @@ export default [
   ),
   {
     plugins: {
-      import: fixupPluginRules(_import),
+      import: _import,
       jest,
       prettier,
       "@typescript-eslint": typescriptEslint,
@@ -48,36 +47,26 @@ export default [
       sourceType: "module",
 
       parserOptions: {
-<<<<<<< HEAD
         projectService: {
           allowDefaultProject: [
-            '__fixtures__/*.ts',
-            '__tests__/*.ts',
-            'eslint.config.mjs',
-            'jest.config.js',
-            'rollup.config.ts'
-          ]
+            "__fixtures__/*.ts",
+            "__tests__/*.ts",
+            "eslint.config.mjs",
+            "jest.config.js",
+            "rollup.config.ts",
+          ],
         },
-        tsconfigRootDir: import.meta.dirname
-      }
-||||||| parent of 2fcfda9 (Replace .prettierrc.yml with .prettierrc.json5.)
-        project: ["tsconfig.eslint.json"],
-        tsconfigRootDir: ".",
+        tsconfigRootDir: import.meta.dirname,
       },
-=======
-        project: ["tsconfig.eslint.json"],
-        tsconfigRootDir: __dirname,
-      },
->>>>>>> 2fcfda9 (Replace .prettierrc.yml with .prettierrc.json5.)
     },
 
     settings: {
       "import/resolver": {
         typescript: {
           alwaysTryTypes: true,
-          project: 'tsconfig.json'
-        }
-      }
+          project: "tsconfig.json",
+        },
+      },
     },
 
     rules: {
