@@ -4,6 +4,7 @@ import { FlatCompat } from "@eslint/eslintrc";
 import js from "@eslint/js";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
+import _import from "eslint-plugin-import-x";
 import jest from "eslint-plugin-jest";
 import prettier from "eslint-plugin-prettier";
 import globals from "globals";
@@ -27,6 +28,7 @@ export default [
   ),
   {
     plugins: {
+      import: _import,
       jest,
       prettier,
       "@typescript-eslint": typescriptEslint,
