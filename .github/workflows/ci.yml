@@ -16,12 +16,18 @@ jobs:
       - name: Checkout
         id: checkout
 <<<<<<< HEAD
+<<<<<<< HEAD
         uses: actions/checkout@v6
 ||||||| parent of ca8c0be (chore(deps): bump actions/checkout from 4 to 5)
         uses: actions/checkout@v4
 =======
         uses: actions/checkout@v5
 >>>>>>> ca8c0be (chore(deps): bump actions/checkout from 4 to 5)
+||||||| parent of 94ae688 (chore(deps): bump actions/checkout from 5 to 6)
+        uses: actions/checkout@v5
+=======
+        uses: actions/checkout@v6
+>>>>>>> 94ae688 (chore(deps): bump actions/checkout from 5 to 6)
 
         with:
           version: "latest"
@@ -57,12 +63,18 @@ jobs:
       - name: Checkout
         id: checkout
 <<<<<<< HEAD
+<<<<<<< HEAD
         uses: actions/checkout@v6
 ||||||| parent of ca8c0be (chore(deps): bump actions/checkout from 4 to 5)
         uses: actions/checkout@v4
 =======
         uses: actions/checkout@v5
 >>>>>>> ca8c0be (chore(deps): bump actions/checkout from 4 to 5)
+||||||| parent of 94ae688 (chore(deps): bump actions/checkout from 5 to 6)
+        uses: actions/checkout@v5
+=======
+        uses: actions/checkout@v6
+>>>>>>> 94ae688 (chore(deps): bump actions/checkout from 5 to 6)
 
       - name: Test Local Action
         id: test-action
