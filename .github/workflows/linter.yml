@@ -42,9 +42,6 @@ jobs:
         with:
           fetch-depth: 0
 
-        with:
-          version: "latest"
-
       - name: Setup Node.js
         id: setup-node
         uses: actions/setup-node@v6
