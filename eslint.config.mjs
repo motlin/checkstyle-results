@@ -48,6 +48,7 @@ export default [
       sourceType: "module",
 
       parserOptions: {
+<<<<<<< HEAD
         projectService: {
           allowDefaultProject: [
             '__fixtures__/*.ts',
@@ -59,6 +60,15 @@ export default [
         },
         tsconfigRootDir: import.meta.dirname
       }
+||||||| parent of 2fcfda9 (Replace .prettierrc.yml with .prettierrc.json5.)
+        project: ["tsconfig.eslint.json"],
+        tsconfigRootDir: ".",
+      },
+=======
+        project: ["tsconfig.eslint.json"],
+        tsconfigRootDir: __dirname,
+      },
+>>>>>>> 2fcfda9 (Replace .prettierrc.yml with .prettierrc.json5.)
     },
 
     settings: {
