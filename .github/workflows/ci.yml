@@ -29,9 +29,6 @@ jobs:
         uses: actions/checkout@v6
 >>>>>>> 94ae688 (chore(deps): bump actions/checkout from 5 to 6)
 
-        with:
-          version: "latest"
-
       - name: Setup Node.js
         id: setup-node
         uses: actions/setup-node@v6
