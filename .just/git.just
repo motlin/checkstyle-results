@@ -1,5 +1,6 @@
 upstream_remote := env('UPSTREAM_REMOTE', "upstream")
 upstream_branch := env('UPSTREAM_BRANCH', "main")
+offline := env_var_or_default('OFFLINE', 'false')
 
 # git clean helper
 _clean-git:
@@ -20,4 +21,12 @@ _check-local-modifications:
         echo -e "$ERRORS"
         just _run "git status"
         exit 1
+    fi
+
+# git fetch configurable upstream
+fetch:
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    if [ "{{offline}}" != "true" ]; then
+        just _run "git fetch {{ANSI_BRIGHT_RED}}{{ANSI_BOLD}}{{upstream_remote}}{{ANSI_NORMAL}} --tags --prune"
     fi
