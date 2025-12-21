@@ -17,12 +17,8 @@ jobs:
         id: checkout
         uses: actions/checkout@v6
 
-      - name: Setup Node.js
-        id: setup-node
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: .node-version
-          cache: npm
+      - name: Setup mise
+        uses: jdx/mise-action@v3
 
       - name: Install Dependencies
         id: npm-install
