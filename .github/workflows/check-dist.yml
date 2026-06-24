@@ -32,6 +32,7 @@ jobs:
 
         with:
           version: "latest"
+          persist-credentials: false
 
       - name: Setup Node.js
         id: setup-node
