@@ -25,19 +25,12 @@ repos:
 
   - repo: local
     hooks:
-      - id: biome
-        name: biome
-        entry: npx biome format --write
+      - id: oxfmt
+        name: oxfmt-next-line
+        entry: oxfmt-next-line --no-error-on-unmatched-pattern
         language: system
-        types: [file]
-        files: \.(js|jsx|ts|tsx|mjs|cjs|json|json5)$
-        exclude: "package(-lock)?\\.json|^\\.claude/|^dist/"
-
-      - id: prettier
-        name: prettier
-        entry: npx prettier --write
-        language: system
-        types_or: [yaml, markdown, html]
+        # Show "Finished in Xms on N files" so every run proves formatting happened.
+        verbose: true
 
       - id: eslint
         name: eslint

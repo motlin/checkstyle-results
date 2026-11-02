@@ -41,6 +41,10 @@ jobs:
           node-version-file: .node-version
           cache: npm
 
+      # `npm run bundle` formats with oxfmt-next-line, which mise installs.
+      - name: Setup mise
+        uses: jdx/mise-action@e6a8b3978addb5a52f2b4cd9d91eafa7f0ab959d # v4.2.0
+
       - name: Remove dist/ Directory
         id: remove-dist
         run: npx rimraf ./dist
