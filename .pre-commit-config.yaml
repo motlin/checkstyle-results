@@ -10,7 +10,8 @@ repos:
       - id: check-toml
       - id: check-xml
       - id: end-of-file-fixer
-        exclude: "package-lock\\.json|^\\.idea/|^dist/"
+        # badges/coverage.svg is written by make-coverage-badge without a trailing newline
+        exclude: "package-lock\\.json|^\\.idea/|^dist/|^badges/"
       - id: trailing-whitespace
         exclude: "package-lock\\.json|^\\.idea/|^dist/"
       - id: check-added-large-files
