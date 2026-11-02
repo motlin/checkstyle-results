@@ -4,10 +4,18 @@ import * as fs from "fs";
 import * as path from "path";
 import { parseStringPromise } from "xml2js";
 
-export async function run(): Promise<void> {
-  try {
-    let pattern = core.getInput("checkstyle_files", { required: false });
-    if (!pattern) {
+export async function run(): Promise<void>
+{
+  try
+  {
+    let pattern = core.getInput(
+      "checkstyle_files",
+      {
+        required: false,
+      },
+    );
+    if (!pattern)
+    {
       pattern = "**/checkstyle-result.xml";
     }
 
@@ -16,7 +24,8 @@ export async function run(): Promise<void> {
 
     let foundErrors = false;
 
-    const counters = {
+    const counters =
+    {
       errors: 0,
       warnings: 0,
       notices: 0,
@@ -24,14 +33,16 @@ export async function run(): Promise<void> {
       skipped: 0,
     };
 
-    const limits = {
+    const limits =
+    {
       error: 10,
       warning: 10,
       notice: 30,
       total: 50,
     };
 
-    const allViolations: Array<{
+    const allViolations: Array<
+    {
       file: string;
       line: number;
       column: number;
@@ -40,37 +51,49 @@ export async function run(): Promise<void> {
       source: string;
     }> = [];
 
-    function formatRuleTitle(source: string): string {
-      if (source && source.includes(".")) {
+    function formatRuleTitle(source: string): string
+    {
+      if (source && source.includes("."))
+      {
         const parts = source.split(".");
         const ruleName = parts[parts.length - 1].replace("Check", "");
         const packageName = parts[parts.length - 2];
         return `${packageName}/${ruleName}`;
-      } else {
+      }
+      else
+      {
         return source;
       }
     }
 
-    for (const filePath of files) {
+    for (const filePath of files)
+    {
       core.debug(`Reading Checkstyle file: ${filePath}`);
-      if (!fs.existsSync(filePath)) {
+      if (!fs.existsSync(filePath))
+      {
         core.warning(`File not found: ${filePath}`);
         continue;
       }
 
       let xmlData: string;
-      try {
+      try
+      {
         xmlData = fs.readFileSync(filePath, "utf-8");
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error) {
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      catch (error)
+      {
         core.warning(`Failed to read file: ${filePath}`);
         continue;
       }
 
       let result;
-      try {
+      try
+      {
         result = await parseStringPromise(xmlData);
-      } catch (error) {
+      }
+      catch (error)
+      {
         core.warning(
           `Failed to parse XML in file: ${filePath}. ${error instanceof Error ? error.message : String(error)}`,
         );
@@ -79,10 +102,12 @@ export async function run(): Promise<void> {
 
       const filesInReport = result.checkstyle?.file || [];
 
-      for (const f of filesInReport) {
+      for (const f of filesInReport)
+      {
         const filename = f.$.name;
         const errors = f.error || [];
-        for (const e of errors) {
+        for (const e of errors)
+        {
           const line = e.$.line || 0;
           const column = e.$.column || 0;
           const severity = e.$.severity || "error";
@@ -90,27 +115,34 @@ export async function run(): Promise<void> {
           const source = e.$.source || "";
 
           let command = "error";
-          if (severity.toLowerCase() === "warning") {
+          if (severity.toLowerCase() === "warning")
+          {
             command = "warning";
-          } else if (severity.toLowerCase() === "info") {
+          }
+          else if (severity.toLowerCase() === "info")
+          {
             command = "notice";
           }
-          if (severity.toLowerCase() === "error") {
+          if (severity.toLowerCase() === "error")
+          {
             foundErrors = true;
           }
 
           counters.total++;
 
-          allViolations.push({
-            file: filename,
-            line: parseInt(line),
-            column: parseInt(column),
-            severity: severity,
-            message: msg,
-            source: source,
-          });
+          allViolations.push(
+            {
+              file: filename,
+              line: parseInt(line),
+              column: parseInt(column),
+              severity: severity,
+              message: msg,
+              source: source,
+            },
+          );
 
-          if (counters.total <= limits.total) {
+          if (counters.total <= limits.total)
+          {
             const severityCount =
               command === "error"
                 ? ++counters.errors
@@ -121,23 +153,30 @@ export async function run(): Promise<void> {
             const severityLimit =
               command === "error" ? limits.error : command === "warning" ? limits.warning : limits.notice;
 
-            if (severityCount <= severityLimit) {
+            if (severityCount <= severityLimit)
+            {
               const relativePath = path.relative(process.cwd(), filename);
               const title = formatRuleTitle(source);
               core.info(`::${command} file=${relativePath},line=${line},col=${column},title=${title}::${msg}`);
-            } else {
+            }
+            else
+            {
               counters.skipped++;
             }
-          } else {
+          }
+          else
+          {
             counters.skipped++;
           }
         }
       }
     }
 
-    if (allViolations.length > 0) {
+    if (allViolations.length > 0)
+    {
       core.info("\n=== CheckStyle Violations ===");
-      for (const violation of allViolations) {
+      for (const violation of allViolations)
+      {
         const relativePath = path.relative(process.cwd(), violation.file);
         core.info(
           `${relativePath}:[${violation.line},${violation.column}] (${violation.source.split(".").pop()}) ${violation.message}`,
@@ -146,7 +185,8 @@ export async function run(): Promise<void> {
       core.info("===========================\n");
     }
 
-    if (counters.skipped > 0) {
+    if (counters.skipped > 0)
+    {
       const summary = [
         `## CheckStyle Violations Summary`,
         ``,
@@ -166,10 +206,13 @@ export async function run(): Promise<void> {
       );
     }
 
-    if (foundErrors) {
+    if (foundErrors)
+    {
       core.setFailed("Checkstyle reported errors");
     }
-  } catch (error) {
+  }
+  catch (error)
+  {
     if (error instanceof Error) core.setFailed(error.message);
   }
 }

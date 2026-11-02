@@ -1,28 +1,30 @@
 {
   "name": "checkstyle-results",
-  "description": "GitHub Action to convert CheckStyle XML reports to GitHub annotations",
   "version": "1.0.0",
-  "author": "Craig Motlin",
-  "type": "module",
   "private": true,
-  "homepage": "https://github.com/motlin/checkstyle-results",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/motlin/checkstyle-results.git"
-  },
-  "bugs": {
-    "url": "https://github.com/motlin/checkstyle-results/issues"
-  },
+  "description": "GitHub Action to convert CheckStyle XML reports to GitHub annotations",
   "keywords": [
     "actions"
   ],
-  "exports": {
+  "homepage": "https://github.com/motlin/checkstyle-results",
+  "bugs":
+  {
+    "url": "https://github.com/motlin/checkstyle-results/issues"
+  },
+  "license": "Apache-2.0",
+  "author": "Craig Motlin",
+  "repository":
+  {
+    "type": "git",
+    "url": "git+https://github.com/motlin/checkstyle-results.git"
+  },
+  "type": "module",
+  "exports":
+  {
     ".": "./dist/index.js"
   },
-  "engines": {
-    "node": ">=24.0.0"
-  },
-  "scripts": {
+  "scripts":
+  {
     "bundle": "npm run format:write && npm run package",
     "ci-test": "NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 npx jest",
     "coverage": "npx make-coverage-badge --output-path ./badges/coverage.svg",
@@ -35,13 +37,14 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 npx jest",
     "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
   },
-  "license": "Apache-2.0",
-  "dependencies": {
+  "dependencies":
+  {
     "@actions/core": "^3.0.1",
     "@actions/glob": "^0.7.0",
     "xml2js": "^0.6.2"
   },
-  "devDependencies": {
+  "devDependencies":
+  {
     "@eslint/compat": "^2.0.2",
     "@eslint/eslintrc": "^3.3.6",
     "@eslint/js": "^10.0.1",
@@ -68,7 +71,12 @@
     "ts-jest-resolver": "^2.0.1",
     "typescript": "^6.0.3"
   },
-  "optionalDependencies": {
+  "optionalDependencies":
+  {
     "@rollup/rollup-linux-x64-gnu": "*"
+  },
+  "engines":
+  {
+    "node": ">=24.0.0"
   }
 }

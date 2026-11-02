@@ -9,11 +9,13 @@ import _import from "eslint-plugin-import-x";
 import jest from "eslint-plugin-jest";
 import globals from "globals";
 
-const compat = new FlatCompat({
-  baseDirectory: import.meta.dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
+const compat = new FlatCompat(
+  {
+    baseDirectory: import.meta.dirname,
+    recommendedConfig: js.configs.recommended,
+    allConfig: js.configs.all,
+  },
+);
 
 export default [
   {
@@ -28,14 +30,17 @@ export default [
   // Turn off ESLint rules that conflict with formatting, which oxfmt-next-line owns.
   prettierConfig,
   {
-    plugins: {
+    plugins:
+    {
       import: _import,
       jest,
       "@typescript-eslint": typescriptEslint,
     },
 
-    languageOptions: {
-      globals: {
+    languageOptions:
+    {
+      globals:
+      {
         ...globals.node,
         ...globals.jest,
         Atomics: "readonly",
@@ -46,8 +51,10 @@ export default [
       ecmaVersion: 2023,
       sourceType: "module",
 
-      parserOptions: {
-        projectService: {
+      parserOptions:
+      {
+        projectService:
+        {
           allowDefaultProject: [
             "__fixtures__/*.ts",
             "__tests__/*.ts",
@@ -60,16 +67,20 @@ export default [
       },
     },
 
-    settings: {
-      "import/resolver": {
-        typescript: {
+    settings:
+    {
+      "import/resolver":
+      {
+        typescript:
+        {
           alwaysTryTypes: true,
           project: "tsconfig.json",
         },
       },
     },
 
-    rules: {
+    rules:
+    {
       camelcase: "off",
       "eslint-comments/no-use": "off",
       "eslint-comments/no-unused-disable": "off",

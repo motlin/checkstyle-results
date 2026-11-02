@@ -1,6 +1,7 @@
 import { jest, describe, it, expect, beforeEach } from "@jest/globals";
 
-const coreMock = {
+const coreMock =
+{
   debug: jest.fn(),
   warning: jest.fn(),
   info: jest.fn(),
@@ -8,20 +9,24 @@ const coreMock = {
   getInput: jest.fn().mockImplementation(() => "**/fake-checkstyle.xml"),
   setFailed: jest.fn(),
   setOutput: jest.fn(),
-  summary: {
+  summary:
+  {
     addRaw: jest.fn().mockReturnThis(),
     write: jest.fn().mockResolvedValue(undefined),
   },
 };
 
-const globMock = {
-  create: jest.fn().mockImplementation(async () => ({
+const globMock =
+{
+  create: jest.fn().mockImplementation(async () => (
+  {
     glob: jest.fn().mockResolvedValue(["fake.xml"]),
     globGenerator: jest.fn(),
   })),
 };
 
-const fsMock = {
+const fsMock =
+{
   existsSync: jest.fn().mockReturnValue(true),
   readFileSync: jest.fn().mockReturnValue(`
     <checkstyle>
@@ -32,18 +37,25 @@ const fsMock = {
   `),
 };
 
-const pathMock = {
+const pathMock =
+{
   relative: jest.fn().mockReturnValue("SomeFile.java"),
 };
 
-const parseStringPromiseMock = jest.fn().mockImplementation(async () => ({
-  checkstyle: {
+const parseStringPromiseMock = jest.fn().mockImplementation(async () => (
+{
+  checkstyle:
+  {
     file: [
       {
-        $: { name: "SomeFile.java" },
+        $:
+        {
+          name: "SomeFile.java",
+        },
         error: [
           {
-            $: {
+            $:
+            {
               line: "10",
               column: "2",
               severity: "error",
@@ -57,7 +69,8 @@ const parseStringPromiseMock = jest.fn().mockImplementation(async () => ({
   },
 }));
 
-const xml2jsMock = {
+const xml2jsMock =
+{
   parseStringPromise: parseStringPromiseMock,
 };
 
@@ -71,7 +84,8 @@ jest.unstable_mockModule("path", () => pathMock);
 // Dynamically import the module under test after mocks are set up
 let run;
 
-beforeEach(async () => {
+beforeEach(async () =>
+{
   // Clear all mocks before each test
   jest.clearAllMocks();
 
@@ -80,51 +94,68 @@ beforeEach(async () => {
   run = mainModule.run;
 });
 
-describe("Checkstyle logic", () => {
-  it("fails if an 'error' severity is found", async () => {
+describe("Checkstyle logic", () =>
+{
+  it("fails if an 'error' severity is found", async () =>
+  {
     await run();
     expect(coreMock.setFailed).toHaveBeenCalledWith("Checkstyle reported errors");
   });
 
-  it("does not fail if no errors are found", async () => {
+  it("does not fail if no errors are found", async () =>
+  {
     // Override the mock implementation for this test
-    parseStringPromiseMock.mockResolvedValueOnce({
-      checkstyle: {
-        file: [
-          {
-            $: { name: "SomeFile.java" },
-            // No error array
-          },
-        ],
+    parseStringPromiseMock.mockResolvedValueOnce(
+      {
+        checkstyle:
+        {
+          file: [
+            {
+              $:
+              {
+                name: "SomeFile.java",
+              },
+              // No error array
+            },
+          ],
+        },
       },
-    });
+    );
 
     await run();
     expect(coreMock.setFailed).not.toHaveBeenCalled();
   });
 
-  it("formats the annotation title from the source correctly", async () => {
+  it("formats the annotation title from the source correctly", async () =>
+  {
     // Override the mock with a fully qualified source name to test the formatting
-    parseStringPromiseMock.mockResolvedValueOnce({
-      checkstyle: {
-        file: [
-          {
-            $: { name: "SomeFile.java" },
-            error: [
+    parseStringPromiseMock.mockResolvedValueOnce(
+      {
+        checkstyle:
+        {
+          file: [
+            {
+              $:
               {
-                $: {
-                  line: "10",
-                  column: "2",
-                  severity: "error",
-                  message: "Fake error",
-                  source: "com.puppycrawl.tools.checkstyle.checks.coding.NestedIfDepthCheck",
-                },
+                name: "SomeFile.java",
               },
-            ],
-          },
-        ],
+              error: [
+                {
+                  $:
+                  {
+                    line: "10",
+                    column: "2",
+                    severity: "error",
+                    message: "Fake error",
+                    source: "com.puppycrawl.tools.checkstyle.checks.coding.NestedIfDepthCheck",
+                  },
+                },
+              ],
+            },
+          ],
+        },
       },
-    });
+    );
 
     await run();
 
@@ -133,28 +164,36 @@ describe("Checkstyle logic", () => {
     expect(coreMock.info).toHaveBeenCalledWith(expect.stringContaining("title=coding/NestedIfDepth"));
   });
 
-  it("handles annotations with no source attribute", async () => {
+  it("handles annotations with no source attribute", async () =>
+  {
     // Override the mock with no source attribute
-    parseStringPromiseMock.mockResolvedValueOnce({
-      checkstyle: {
-        file: [
-          {
-            $: { name: "SomeFile.java" },
-            error: [
+    parseStringPromiseMock.mockResolvedValueOnce(
+      {
+        checkstyle:
+        {
+          file: [
+            {
+              $:
               {
-                $: {
-                  line: "10",
-                  column: "2",
-                  severity: "error",
-                  message: "Fake error",
-                  // No source provided
-                },
+                name: "SomeFile.java",
               },
-            ],
-          },
-        ],
+              error: [
+                {
+                  $:
+                  {
+                    line: "10",
+                    column: "2",
+                    severity: "error",
+                    message: "Fake error",
+                    // No source provided
+                  },
+                },
+              ],
+            },
+          ],
+        },
       },
-    });
+    );
 
     await run();
 
@@ -164,13 +203,19 @@ describe("Checkstyle logic", () => {
     expect(coreMock.info).not.toHaveBeenCalledWith(expect.stringContaining("title=,"));
   });
 
-  it("handles annotation limits correctly", async () => {
+  it("handles annotation limits correctly", async () =>
+  {
     // Create a mock response with many violations
-    const mockResult = {
-      checkstyle: {
+    const mockResult =
+    {
+      checkstyle:
+      {
         file: [
           {
-            $: { name: "SomeFile.java" },
+            $:
+            {
+              name: "SomeFile.java",
+            },
             error: [],
           },
         ],
@@ -178,42 +223,54 @@ describe("Checkstyle logic", () => {
     };
 
     // Add 15 errors
-    for (let i = 1; i <= 15; i++) {
-      mockResult.checkstyle.file[0].error.push({
-        $: {
-          line: String(i),
-          column: "1",
-          severity: "error",
-          message: `Error ${i}`,
-          source: `com.puppycrawl.tools.checkstyle.checks.ErrorCheck${i}`,
+    for (let i = 1; i <= 15; i++)
+    {
+      mockResult.checkstyle.file[0].error.push(
+        {
+          $:
+          {
+            line: String(i),
+            column: "1",
+            severity: "error",
+            message: `Error ${i}`,
+            source: `com.puppycrawl.tools.checkstyle.checks.ErrorCheck${i}`,
+          },
         },
-      });
+      );
     }
 
     // Add 15 warnings
-    for (let i = 1; i <= 15; i++) {
-      mockResult.checkstyle.file[0].error.push({
-        $: {
-          line: String(i),
-          column: "1",
-          severity: "warning",
-          message: `Warning ${i}`,
-          source: `com.puppycrawl.tools.checkstyle.checks.WarningCheck${i}`,
+    for (let i = 1; i <= 15; i++)
+    {
+      mockResult.checkstyle.file[0].error.push(
+        {
+          $:
+          {
+            line: String(i),
+            column: "1",
+            severity: "warning",
+            message: `Warning ${i}`,
+            source: `com.puppycrawl.tools.checkstyle.checks.WarningCheck${i}`,
+          },
         },
-      });
+      );
     }
 
     // Add 35 notices
-    for (let i = 1; i <= 35; i++) {
-      mockResult.checkstyle.file[0].error.push({
-        $: {
-          line: String(i),
-          column: "1",
-          severity: "info",
-          message: `Info ${i}`,
-          source: `com.puppycrawl.tools.checkstyle.checks.InfoCheck${i}`,
+    for (let i = 1; i <= 35; i++)
+    {
+      mockResult.checkstyle.file[0].error.push(
+        {
+          $:
+          {
+            line: String(i),
+            column: "1",
+            severity: "info",
+            message: `Info ${i}`,
+            source: `com.puppycrawl.tools.checkstyle.checks.InfoCheck${i}`,
+          },
         },
-      });
+      );
     }
 
     parseStringPromiseMock.mockResolvedValueOnce(mockResult);
@@ -228,7 +285,8 @@ describe("Checkstyle logic", () => {
     expect(coreMock.setFailed).toHaveBeenCalledWith("Checkstyle reported errors");
   });
 
-  it("handles malformed XML gracefully", async () => {
+  it("handles malformed XML gracefully", async () =>
+  {
     // Make parseStringPromise throw an error for this test
     parseStringPromiseMock.mockRejectedValueOnce(new Error("XML parsing error"));
 
@@ -241,18 +299,25 @@ describe("Checkstyle logic", () => {
     expect(coreMock.setFailed).not.toHaveBeenCalled();
   });
 
-  it("generates consolidated violations summary in logs", async () => {
+  it("generates consolidated violations summary in logs", async () =>
+  {
     // Override path.relative mock to return the exact filenames we pass in
     pathMock.relative.mockImplementation((_, filename) => filename);
 
-    const mockResult = {
-      checkstyle: {
+    const mockResult =
+    {
+      checkstyle:
+      {
         file: [
           {
-            $: { name: "SomeFile.java" },
+            $:
+            {
+              name: "SomeFile.java",
+            },
             error: [
               {
-                $: {
+                $:
+                {
                   line: "10",
                   column: "2",
                   severity: "error",
@@ -261,7 +326,8 @@ describe("Checkstyle logic", () => {
                 },
               },
               {
-                $: {
+                $:
+                {
                   line: "20",
                   column: "5",
                   severity: "warning",
@@ -272,10 +338,14 @@ describe("Checkstyle logic", () => {
             ],
           },
           {
-            $: { name: "AnotherFile.java" },
+            $:
+            {
+              name: "AnotherFile.java",
+            },
             error: [
               {
-                $: {
+                $:
+                {
                   line: "30",
                   column: "8",
                   severity: "error",

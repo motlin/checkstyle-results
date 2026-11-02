@@ -38622,7 +38622,9 @@ var xml2jsExports = requireXml2js();
 
 async function run() {
     try {
-        let pattern = getInput("checkstyle_files", { required: false });
+        let pattern = getInput("checkstyle_files", {
+            required: false,
+        });
         if (!pattern) {
             pattern = "**/checkstyle-result.xml";
         }
@@ -38663,8 +38665,8 @@ async function run() {
             let xmlData;
             try {
                 xmlData = fs.readFileSync(filePath, "utf-8");
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
             }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             catch (error) {
                 warning(`Failed to read file: ${filePath}`);
                 continue;

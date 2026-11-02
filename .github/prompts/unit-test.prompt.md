@@ -32,14 +32,19 @@ import { wait } from "../__fixtures__/wait.js";
 
 // Mocks should be declared before the module being tested is imported.
 jest.unstable_mockModule("@actions/core", () => core);
-jest.unstable_mockModule("../src/wait.js", () => ({ wait }));
+jest.unstable_mockModule("../src/wait.js", () => (
+{
+  wait,
+}));
 
 // The module being tested should be imported dynamically. This ensures that the
 // mocks are used in place of any actual dependencies.
 const { run } = await import("../src/main.js");
 
-describe("main.ts", () => {
-  beforeEach(() => {
+describe("main.ts", () =>
+{
+  beforeEach(() =>
+  {
     // Set the action's inputs as return values from core.getInput().
     core.getInput.mockImplementation(() => "500");
 
@@ -47,11 +52,13 @@ describe("main.ts", () => {
     wait.mockImplementation(() => Promise.resolve("done!"));
   });
 
-  afterEach(() => {
+  afterEach(() =>
+  {
     jest.resetAllMocks();
   });
 
-  it("Sets the time output", async () => {
+  it("Sets the time output", async () =>
+  {
     await run();
 
     // Verify the time output was set.
@@ -63,7 +70,8 @@ describe("main.ts", () => {
     );
   });
 
-  it("Sets a failed status", async () => {
+  it("Sets a failed status", async () =>
+  {
     // Clear the getInput mock and return an invalid value.
     core.getInput.mockClear().mockReturnValueOnce("this is not a number");
 
