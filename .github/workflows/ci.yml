@@ -28,15 +28,15 @@ jobs:
 
       - name: Check Format
         id: pnpm-format-check
-        run: pnpm run format:check
+        run: pnpm run fmt:ci
 
       - name: Lint
         id: pnpm-lint
-        run: pnpm run lint
+        run: pnpm run oxlint:ci
 
       - name: Test
-        id: pnpm-ci-test
-        run: pnpm run ci-test
+        id: pnpm-test
+        run: pnpm run test run
 
   test-action:
     name: GitHub Actions Test

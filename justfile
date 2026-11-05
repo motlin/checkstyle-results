@@ -18,30 +18,30 @@ mise:
 install:
     pnpm install
 
-# npm run format:write
+# pnpm run fmt
 format: mise install
-    npm run format:write
+    pnpm run fmt
 
-# npm run lint
+# pnpm run oxlint
 lint: mise install
-    npm run lint
+    pnpm run oxlint
 
-# npm run tsc --noEmit
+# pnpm run typecheck
 typecheck: mise install
-    npx tsc --noEmit
+    pnpm run typecheck
 
-# npm run test
+# pnpm run test run
 test: mise install
-    npm run test
+    pnpm run test run
 
-# npm run package
+# pnpm run package
 build: mise install
-    npm run package
+    pnpm run package
 
 # format lint typecheck test build
 precommit: format lint typecheck test build
 
-# npm run all (alias for precommit)
+# pnpm run all (alias for precommit)
 all: precommit
 
 # Override this with a command called `woof` which notifies you in whatever ways you prefer.

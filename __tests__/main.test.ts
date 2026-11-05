@@ -1,34 +1,34 @@
-import { jest, describe, it, expect, beforeEach } from "@jest/globals";
+import { vi, describe, it, expect, beforeEach } from "vite-plus/test";
 
 const coreMock =
 {
-  debug: jest.fn(),
-  warning: jest.fn(),
-  info: jest.fn(),
-  error: jest.fn(),
-  getInput: jest.fn().mockImplementation(() => "**/fake-checkstyle.xml"),
-  setFailed: jest.fn(),
-  setOutput: jest.fn(),
+  debug: vi.fn(),
+  warning: vi.fn(),
+  info: vi.fn(),
+  error: vi.fn(),
+  getInput: vi.fn().mockImplementation(() => "**/fake-checkstyle.xml"),
+  setFailed: vi.fn(),
+  setOutput: vi.fn(),
   summary:
   {
-    addRaw: jest.fn().mockReturnThis(),
-    write: jest.fn().mockResolvedValue(undefined),
+    addRaw: vi.fn().mockReturnThis(),
+    write: vi.fn().mockResolvedValue(undefined),
   },
 };
 
 const globMock =
 {
-  create: jest.fn().mockImplementation(async () => (
+  create: vi.fn().mockImplementation(async () => (
   {
-    glob: jest.fn().mockResolvedValue(["fake.xml"]),
-    globGenerator: jest.fn(),
+    glob: vi.fn().mockResolvedValue(["fake.xml"]),
+    globGenerator: vi.fn(),
   })),
 };
 
 const fsMock =
 {
-  existsSync: jest.fn().mockReturnValue(true),
-  readFileSync: jest.fn().mockReturnValue(`
+  existsSync: vi.fn().mockReturnValue(true),
+  readFileSync: vi.fn().mockReturnValue(`
     <checkstyle>
       <file name="SomeFile.java">
         <error line="10" column="2" severity="error" message="Fake error" source="CheckstyleRule"/>
@@ -39,10 +39,10 @@ const fsMock =
 
 const pathMock =
 {
-  relative: jest.fn().mockReturnValue("SomeFile.java"),
+  relative: vi.fn().mockReturnValue("SomeFile.java"),
 };
 
-const parseStringPromiseMock = jest.fn().mockImplementation(async () => (
+const parseStringPromiseMock = vi.fn().mockImplementation(async () => (
 {
   checkstyle:
   {
@@ -75,11 +75,11 @@ const xml2jsMock =
 };
 
 // Set up mocks before importing the module
-jest.unstable_mockModule("@actions/core", () => coreMock);
-jest.unstable_mockModule("@actions/glob", () => globMock);
-jest.unstable_mockModule("fs", () => fsMock);
-jest.unstable_mockModule("xml2js", () => xml2jsMock);
-jest.unstable_mockModule("path", () => pathMock);
+vi.doMock("@actions/core", () => coreMock);
+vi.doMock("@actions/glob", () => globMock);
+vi.doMock("fs", () => fsMock);
+vi.doMock("xml2js", () => xml2jsMock);
+vi.doMock("path", () => pathMock);
 
 // Dynamically import the module under test after mocks are set up
 let run;
@@ -87,7 +87,7 @@ let run;
 beforeEach(async () =>
 {
   // Clear all mocks before each test
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 
   // Dynamically import the module to ensure mocks are applied
   const mainModule = await import("../src/main.js");
