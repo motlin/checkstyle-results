@@ -1,34 +1,43 @@
 import { vi, describe, it, expect, beforeEach } from "vite-plus/test";
 
+import type { run as runType } from "../src/main.js";
+
 const coreMock =
 {
-  debug: vi.fn(),
-  warning: vi.fn(),
-  info: vi.fn(),
-  error: vi.fn(),
-  getInput: vi.fn().mockImplementation(() => "**/fake-checkstyle.xml"),
-  setFailed: vi.fn(),
-  setOutput: vi.fn(),
+  debug: vi.fn<(message: string) => void>(),
+  warning: vi.fn<(message: string) => void>(),
+  info: vi.fn<(message: string) => void>(),
+  error: vi.fn<(message: string) => void>(),
+  getInput: vi.fn<(name: string) => string>().mockReturnValue("**/fake-checkstyle.xml"),
+  setFailed: vi.fn<(message: string) => void>(),
+  setOutput: vi.fn<(name: string, value: unknown) => void>(),
   summary:
   {
-    addRaw: vi.fn().mockReturnThis(),
-    write: vi.fn().mockResolvedValue(undefined),
+    addRaw: vi.fn<(text: string) => unknown>().mockReturnThis(),
+    write: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
   },
 };
 
+interface GlobberMock
+{
+  glob: () => Promise<string[]>;
+  globGenerator: () => void;
+}
+
 const globMock =
 {
-  create: vi.fn().mockImplementation(async () => (
-  {
-    glob: vi.fn().mockResolvedValue(["fake.xml"]),
-    globGenerator: vi.fn(),
-  })),
+  create: vi.fn<(pattern: string) => Promise<GlobberMock>>().mockResolvedValue(
+    {
+      glob: vi.fn<() => Promise<string[]>>().mockResolvedValue(["fake.xml"]),
+      globGenerator: vi.fn<() => void>(),
+    },
+  ),
 };
 
 const fsMock =
 {
-  existsSync: vi.fn().mockReturnValue(true),
-  readFileSync: vi.fn().mockReturnValue(`
+  existsSync: vi.fn<(path: string) => boolean>().mockReturnValue(true),
+  readFileSync: vi.fn<(path: string, encoding: string) => string>().mockReturnValue(`
     <checkstyle>
       <file name="SomeFile.java">
         <error line="10" column="2" severity="error" message="Fake error" source="CheckstyleRule"/>
@@ -39,35 +48,41 @@ const fsMock =
 
 const pathMock =
 {
-  relative: vi.fn().mockReturnValue("SomeFile.java"),
+  relative: vi.fn<(from: string, to: string) => string>().mockReturnValue("SomeFile.java"),
 };
 
-const parseStringPromiseMock = vi.fn().mockImplementation(async () => (
+interface CheckstyleErrorMock
 {
-  checkstyle:
+  $: Record<string, string>;
+}
+
+const parseStringPromiseMock = vi.fn<(xml: string) => Promise<unknown>>().mockResolvedValue(
   {
-    file: [
-      {
-        $:
+    checkstyle:
+    {
+      file: [
         {
-          name: "SomeFile.java",
-        },
-        error: [
+          $:
           {
-            $:
-            {
-              line: "10",
-              column: "2",
-              severity: "error",
-              message: "Fake error",
-              source: "CheckstyleRule",
-            },
+            name: "SomeFile.java",
           },
-        ],
-      },
-    ],
+          error: [
+            {
+              $:
+              {
+                line: "10",
+                column: "2",
+                severity: "error",
+                message: "Fake error",
+                source: "CheckstyleRule",
+              },
+            },
+          ],
+        },
+      ],
+    },
   },
-}));
+);
 
 const xml2jsMock =
 {
@@ -82,7 +97,7 @@ vi.doMock("xml2js", () => xml2jsMock);
 vi.doMock("path", () => pathMock);
 
 // Dynamically import the module under test after mocks are set up
-let run;
+let run: typeof runType;
 
 beforeEach(async () =>
 {
@@ -216,7 +231,7 @@ describe("Checkstyle logic", () =>
             {
               name: "SomeFile.java",
             },
-            error: [],
+            error: [] as CheckstyleErrorMock[],
           },
         ],
       },
