@@ -1,10 +1,15 @@
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@1.1.0
-  vite-plus: 1.1.0
   vitest: 5.0.4
+  vite-plus: 1.1.0
 overrides:
-  vite@*: "catalog:"
+  vite: "catalog:"
   vitest: "catalog:"
+  # Older postcss reads arbitrary .map files from an attacker-controlled sourceMappingURL (GHSA-6g55-p6wh-862q).
+  postcss: ">=8.5.23"
 peerDependencyRules:
   allowAny:
     - vite
@@ -13,5 +18,7 @@ peerDependencyRules:
     vite: "*"
     vitest: "*"
 allowBuilds:
+  # Optional native watcher for jest-haste-map; its install script compiles from source when no prebuilt binary matches.
   "@parcel/watcher": false
   esbuild: true
+  unrs-resolver: true
