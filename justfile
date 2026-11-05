@@ -14,9 +14,9 @@ mise:
     mise install --quiet
     mise current
 
-# npm install
+# pnpm install
 install:
-    npm install
+    pnpm install
 
 # npm run format:write
 format: mise install
