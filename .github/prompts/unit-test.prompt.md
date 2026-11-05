@@ -13,7 +13,7 @@ Ensure you adhere to the following guidelines when creating unit tests:
 - Use descriptive test names that clearly convey their purpose
 - Ensure tests cover both the main path of success and edge cases
 - Use proper assertions to validate the expected outcomes
-- Use `jest` for writing and running tests
+- Use `vitest` (imported from `vite-plus/test`) for writing and running tests
 - Place unit tests in the `__tests__` directory
 - Use fixtures for any necessary test data, placed in the `__fixtures__`
   directory
@@ -26,13 +26,13 @@ Use the following as an example of how to structure your unit tests:
 /**
  * Unit tests for the action's main functionality, src/main.ts
  */
-import { jest } from "@jest/globals";
+import { vi, describe, it, expect, beforeEach, afterEach } from "vite-plus/test";
 import * as core from "../__fixtures__/core.js";
 import { wait } from "../__fixtures__/wait.js";
 
 // Mocks should be declared before the module being tested is imported.
-jest.unstable_mockModule("@actions/core", () => core);
-jest.unstable_mockModule("../src/wait.js", () => (
+vi.doMock("@actions/core", () => core);
+vi.doMock("../src/wait.js", () => (
 {
   wait,
 }));
@@ -54,7 +54,7 @@ describe("main.ts", () =>
 
   afterEach(() =>
   {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("Sets the time output", async () =>
