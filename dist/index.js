@@ -39460,6 +39460,26 @@ function requireXml2js () {
 
 var xml2jsExports = requireXml2js();
 
+// xml2js types its result as `any`; this alias pins it to the CheckStyle report shape.
+const parseCheckstyleXml = xml2jsExports.parseStringPromise;
+// Mirrors `value || fallback`: xml2js yields strings, and an empty attribute falls back too.
+function attributeOrDefault(value, fallback) {
+    if (value === undefined || value === "") {
+        return fallback;
+    }
+    return value;
+}
+function formatRuleTitle(source) {
+    if (source.includes(".")) {
+        const parts = source.split(".");
+        const ruleName = parts[parts.length - 1].replace("Check", "");
+        const packageName = parts[parts.length - 2];
+        return `${packageName}/${ruleName}`;
+    }
+    else {
+        return source;
+    }
+}
 async function run() {
     try {
         let pattern = getInput("checkstyle_files", {
@@ -39485,17 +39505,6 @@ async function run() {
             total: 50,
         };
         const allViolations = [];
-        function formatRuleTitle(source) {
-            if (source && source.includes(".")) {
-                const parts = source.split(".");
-                const ruleName = parts[parts.length - 1].replace("Check", "");
-                const packageName = parts[parts.length - 2];
-                return `${packageName}/${ruleName}`;
-            }
-            else {
-                return source;
-            }
-        }
         for (const filePath of files) {
             debug(`Reading Checkstyle file: ${filePath}`);
             if (!fs.existsSync(filePath)) {
@@ -39506,29 +39515,28 @@ async function run() {
             try {
                 xmlData = fs.readFileSync(filePath, "utf-8");
             }
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            catch (error) {
+            catch {
                 warning(`Failed to read file: ${filePath}`);
                 continue;
             }
             let result;
             try {
-                result = await xml2jsExports.parseStringPromise(xmlData);
+                result = await parseCheckstyleXml(xmlData);
             }
             catch (error) {
                 warning(`Failed to parse XML in file: ${filePath}. ${error instanceof Error ? error.message : String(error)}`);
                 continue;
             }
-            const filesInReport = result.checkstyle?.file || [];
+            const filesInReport = result.checkstyle?.file ?? [];
             for (const f of filesInReport) {
                 const filename = f.$.name;
-                const errors = f.error || [];
+                const errors = f.error ?? [];
                 for (const e of errors) {
-                    const line = e.$.line || 0;
-                    const column = e.$.column || 0;
-                    const severity = e.$.severity || "error";
-                    const msg = e.$.message || "No message provided";
-                    const source = e.$.source || "";
+                    const line = attributeOrDefault(e.$.line, "0");
+                    const column = attributeOrDefault(e.$.column, "0");
+                    const severity = attributeOrDefault(e.$.severity, "error");
+                    const msg = attributeOrDefault(e.$.message, "No message provided");
+                    const source = e.$.source ?? "";
                     let command = "error";
                     if (severity.toLowerCase() === "warning") {
                         command = "warning";
@@ -39591,7 +39599,7 @@ async function run() {
                 `- Warnings: ${counters.warnings > limits.warning ? limits.warning : counters.warnings} reported${counters.warnings > limits.warning ? ` (${counters.warnings - limits.warning} omitted)` : ""}`,
                 `- Notices: ${counters.notices > limits.notice ? limits.notice : counters.notices} reported${counters.notices > limits.notice ? ` (${counters.notices - limits.notice} omitted)` : ""}`,
             ].join("\n");
-            summary.addRaw(summary$1).write();
+            void summary.addRaw(summary$1).write();
             info(`CheckStyle found ${counters.total} violations in total, but only ${counters.total - counters.skipped} were reported as annotations due to GitHub limits.`);
         }
         if (foundErrors) {
@@ -39605,5 +39613,5 @@ async function run() {
 }
 
 /* istanbul ignore next */
-run();
+void run();
 //# sourceMappingURL=index.js.map
