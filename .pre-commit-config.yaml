@@ -31,7 +31,7 @@ repos:
       - id: yamllint
         args: ["--strict"]
         types: [yaml]
-        exclude: "^(node_modules/|dist/|storybook-static/|\\.llm/|\\.claude/|pnpm-lock\\.yaml)"
+        exclude: "^(node_modules/|dist/|storybook-static/|\\.licenses/|\\.llm/|\\.claude/|pnpm-lock\\.yaml)"
 
   - repo: local
     hooks:

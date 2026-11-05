@@ -6,43 +6,69 @@ import ".just/git.just"
 import ".just/git-rebase.just"
 import ".just/git-test.just"
 
+# `just --list --unsorted`
+[group('default')]
 default:
     @just --list --unsorted
 
-# mise install
-mise:
-    mise install --quiet
-    mise current
+ci := env("CI", "")
 
-# pnpm install
+export PATH := justfile_directory() / "node_modules/.bin" + ":" + env("PATH")
+
+# Install dependencies
+[group('setup')]
 install:
     pnpm install
 
-# pnpm run fmt
-format: mise install
-    pnpm run fmt
+# Run linter
+lint: install
+    vp lint {{ if ci != "" { "--format github" } else { "--fix" } }}
 
-# pnpm run oxlint
-lint: mise install
-    pnpm run oxlint
+# Run formatter
+format: install
+    pre-commit run just-fmt --all-files
+    oxfmt-next-line {{ if ci != "" { "--check" } else { "" } }}
 
-# pnpm run typecheck
-typecheck: mise install
-    pnpm run typecheck
+# Run checks (format + lint + typecheck)
+check: format lint typecheck
 
-# pnpm run test run
-test: mise install
-    pnpm run test run
+# Run tests
+test *args: install
+    node node_modules/vitest/dist/cli.js run {{ args }}
 
-# pnpm run package
-build: mise install
-    pnpm run package
+# Type-check the project
+typecheck: install
+    vp run typecheck
 
-# format lint typecheck test build
-precommit: format lint typecheck test build
+# Bundle the action into dist/
+build: install
+    vp run package
 
-# pnpm run all (alias for precommit)
-all: precommit
+# Apply safe Fallow fixes locally, then reject remaining dead code
+fallow: install
+    {{ if ci == "" { "vp run fallow" } else { "true" } }}
+    vp run fallow:ci
+
+# vp run fallow:ci
+fallow-check: install
+    vp run fallow:ci
+
+# Run pre-commit hooks on all files (same as CI's pre-commit job)
+pre-commit: install
+    pre-commit run --all-files
+
+# Run all pre-commit checks
+[arg("quick", long, value="true", help="Skip tests")]
+verify quick="": check build fallow pre-commit
+    {{ if quick != "true" { "just test" } else { "true" } }}
+    @echo "All pre-commit checks passed!"
+
+# Deprecated alias for `verify`
+[arg("quick", long, value="true", help="Skip tests")]
+precommit quick="": (verify quick)
+
+# Alias for `verify`
+all: verify
 
 # Override this with a command called `woof` which notifies you in whatever ways you prefer.
 # My `woof` command uses `echo`, `say`, and sends a Pushover notification.

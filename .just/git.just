@@ -17,7 +17,7 @@ _check-local-modifications:
     git status --porcelain | grep -q '^??' && ERRORS+="- Untracked files exist\n"
 
     if [ -n "$ERRORS" ]; then
-        {{echo_command}} "Local modifications"
+        {{ echo_command }} "Local modifications"
         echo -e "$ERRORS"
         just _run "git status"
         exit 1
@@ -27,6 +27,6 @@ _check-local-modifications:
 fetch:
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    if [ "{{offline}}" != "true" ]; then
-        just _run "git fetch {{ANSI_BRIGHT_RED}}{{ANSI_BOLD}}{{upstream_remote}}{{ANSI_NORMAL}} --tags --prune"
+    if [ "{{ offline }}" != "true" ]; then
+        just _run "git fetch {{ ANSI_BRIGHT_RED }}{{ ANSI_BOLD }}{{ upstream_remote }}{{ ANSI_NORMAL }} --tags --prune"
     fi
