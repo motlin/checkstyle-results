@@ -4,6 +4,63 @@ import * as fs from "fs";
 import * as path from "path";
 import { parseStringPromise } from "xml2js";
 
+interface CheckstyleErrorAttributes
+{
+  line?: string;
+  column?: string;
+  severity?: string;
+  message?: string;
+  source?: string;
+}
+
+interface CheckstyleFile
+{
+  $:
+  {
+    name: string;
+  };
+  error?: Array<
+  {
+    $: CheckstyleErrorAttributes;
+  }>;
+}
+
+interface CheckstyleReport
+{
+  checkstyle?:
+  {
+    file?: CheckstyleFile[];
+  };
+}
+
+// xml2js types its result as `any`; this alias pins it to the CheckStyle report shape.
+const parseCheckstyleXml: (xml: string) => Promise<CheckstyleReport> = parseStringPromise;
+
+// Mirrors `value || fallback`: xml2js yields strings, and an empty attribute falls back too.
+function attributeOrDefault(value: string | undefined, fallback: string): string
+{
+  if (value === undefined || value === "")
+  {
+    return fallback;
+  }
+  return value;
+}
+
+function formatRuleTitle(source: string): string
+{
+  if (source.includes("."))
+  {
+    const parts = source.split(".");
+    const ruleName = parts[parts.length - 1].replace("Check", "");
+    const packageName = parts[parts.length - 2];
+    return `${packageName}/${ruleName}`;
+  }
+  else
+  {
+    return source;
+  }
+}
+
 export async function run(): Promise<void>
 {
   try
@@ -51,21 +108,6 @@ export async function run(): Promise<void>
       source: string;
     }> = [];
 
-    function formatRuleTitle(source: string): string
-    {
-      if (source && source.includes("."))
-      {
-        const parts = source.split(".");
-        const ruleName = parts[parts.length - 1].replace("Check", "");
-        const packageName = parts[parts.length - 2];
-        return `${packageName}/${ruleName}`;
-      }
-      else
-      {
-        return source;
-      }
-    }
-
     for (const filePath of files)
     {
       core.debug(`Reading Checkstyle file: ${filePath}`);
@@ -80,17 +122,16 @@ export async function run(): Promise<void>
       {
         xmlData = fs.readFileSync(filePath, "utf-8");
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      catch (error)
+      catch
       {
         core.warning(`Failed to read file: ${filePath}`);
         continue;
       }
 
-      let result;
+      let result: CheckstyleReport;
       try
       {
-        result = await parseStringPromise(xmlData);
+        result = await parseCheckstyleXml(xmlData);
       }
       catch (error)
       {
@@ -100,19 +141,19 @@ export async function run(): Promise<void>
         continue;
       }
 
-      const filesInReport = result.checkstyle?.file || [];
+      const filesInReport = result.checkstyle?.file ?? [];
 
       for (const f of filesInReport)
       {
         const filename = f.$.name;
-        const errors = f.error || [];
+        const errors = f.error ?? [];
         for (const e of errors)
         {
-          const line = e.$.line || 0;
-          const column = e.$.column || 0;
-          const severity = e.$.severity || "error";
-          const msg = e.$.message || "No message provided";
-          const source = e.$.source || "";
+          const line = attributeOrDefault(e.$.line, "0");
+          const column = attributeOrDefault(e.$.column, "0");
+          const severity = attributeOrDefault(e.$.severity, "error");
+          const msg = attributeOrDefault(e.$.message, "No message provided");
+          const source = e.$.source ?? "";
 
           let command = "error";
           if (severity.toLowerCase() === "warning")
@@ -200,7 +241,7 @@ export async function run(): Promise<void>
         `- Notices: ${counters.notices > limits.notice ? limits.notice : counters.notices} reported${counters.notices > limits.notice ? ` (${counters.notices - limits.notice} omitted)` : ""}`,
       ].join("\n");
 
-      core.summary.addRaw(summary).write();
+      void core.summary.addRaw(summary).write();
       core.info(
         `CheckStyle found ${counters.total} violations in total, but only ${counters.total - counters.skipped} were reported as annotations due to GitHub limits.`,
       );
