@@ -18,7 +18,5 @@ peerDependencyRules:
     vite: "*"
     vitest: "*"
 allowBuilds:
-  # Optional native watcher for jest-haste-map; its install script compiles from source when no prebuilt binary matches.
-  "@parcel/watcher": false
   esbuild: true
   unrs-resolver: true
