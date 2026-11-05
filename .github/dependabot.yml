@@ -27,10 +27,6 @@ updates:
       actions-toolkit:
         patterns:
           - "@actions/*"
-      rollup:
-        patterns:
-          - "rollup"
-          - "@rollup/*"
     commit-message:
       prefix: "dependabot"
       include: "scope"
