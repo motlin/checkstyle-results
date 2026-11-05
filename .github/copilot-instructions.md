@@ -30,7 +30,6 @@ it is generated from.
 | `.yaml-lint.yml`     | YAML Linter Configuration                                |
 | `action.yml`         | GitHub Action Metadata                                   |
 | `CODEOWNERS`         | Code Owners File                                         |
-| `jest.config.js`     | Jest Configuration                                       |
 | `LICENSE`            | License File                                             |
 | `package.json`       | NPM Package Configuration                                |
 | `README.md`          | Project Documentation                                    |
@@ -54,7 +53,7 @@ npm run test
 ```
 
 Unit tests should exist in the `__tests__` directory. They are powered by
-`jest`. Fixtures should be placed in the `__fixtures__` directory.
+`vitest`. Fixtures should be placed in the `__fixtures__` directory.
 
 ## Bundling
 
