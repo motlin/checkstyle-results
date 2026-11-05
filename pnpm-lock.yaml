@@ -164,16 +164,14 @@ settings:
 
 catalogs:
   default:
-    vite:
-      specifier: npm:@voidzero-dev/vite-plus-core@1.1.0
-      version: 1.1.0
     vite-plus:
       specifier: 1.1.0
       version: 1.1.0
 
 overrides:
-  vite@*: npm:@voidzero-dev/vite-plus-core@1.1.0
+  vite: npm:@voidzero-dev/vite-plus-core@1.1.0
   vitest: 5.0.4
+  postcss: '>=8.5.23'
 
 importers:
 
@@ -271,7 +269,7 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
       vite:
-        specifier: 'catalog:'
+        specifier: npm:@voidzero-dev/vite-plus-core@1.1.0
         version: '@voidzero-dev/vite-plus-core@1.1.0(@types/node@26.6.6)(esbuild@0.28.2)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)'
       vite-plus:
         specifier: 'catalog:'
