@@ -38,7 +38,7 @@
     "bundle": "vp run fmt && vp run package",
     "coverage": "vp exec make-coverage-badge --output-path ./badges/coverage.svg",
     "local-action": "vp exec local-action . src/main.ts .env",
-    "package": "rm -rf ./dist && vp exec rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "package": "vp build",
     "package:watch": "vp run package -- --watch",
     "all": "vp run fmt && vp run oxlint && vp run test run && vp run coverage && vp run package",
     "prepare": "VITE_GIT_HOOKS=0 vp config"
@@ -52,23 +52,15 @@
   "devDependencies":
   {
     "@github/local-action": "^7.0.1",
-    "@rollup/plugin-commonjs": "^29.0.3",
-    "@rollup/plugin-node-resolve": "^16.0.3",
-    "@rollup/plugin-typescript": "^12.3.0",
     "@types/node": "^26.6.5",
     "@types/xml2js": "^0.4.14",
     "fallow": "^3.33.1",
     "make-coverage-badge": "^1.2.0",
     "markdownlint-cli2": "^0.23.3",
-    "rollup": "^4.62.4",
-    "typescript": "^6.0.3",
+    "typescript": "^7.0.2",
     "vite": "catalog:",
     "vite-plus": "catalog:",
     "vitest": "catalog:"
-  },
-  "optionalDependencies":
-  {
-    "@rollup/rollup-linux-x64-gnu": "*"
   },
   "engines":
   {

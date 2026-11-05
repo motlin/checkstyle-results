@@ -2,6 +2,26 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig(
   {
+    // Bundle the action into a single self-contained ES module at dist/index.js for the node24 runtime.
+    build:
+    {
+      ssr: "src/index.ts",
+      outDir: "dist",
+      target: "node24",
+      sourcemap: true,
+      minify: false,
+      rolldownOptions:
+      {
+        output:
+        {
+          entryFileNames: "index.js",
+        },
+      },
+    },
+    ssr:
+    {
+      noExternal: true,
+    },
     // Formatting runs through oxfmt-next-line (configured in .oxfmtrc.json), not Vite+'s bundled oxfmt.
     check:
     {

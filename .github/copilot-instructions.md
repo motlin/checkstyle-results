@@ -33,8 +33,8 @@ it is generated from.
 | `LICENSE`             | License File                                             |
 | `package.json`        | NPM Package Configuration                                |
 | `README.md`           | Project Documentation                                    |
-| `rollup.config.ts`    | Rollup Bundler Configuration                             |
 | `tsconfig.json`       | TypeScript Configuration                                 |
+| `vite.config.ts`      | Vite+ Configuration (bundling, linting, tasks)           |
 
 ## Environment Setup
 
