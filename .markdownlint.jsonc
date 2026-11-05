@@ -30,8 +30,8 @@
   // MD007/ul-indent : Unordered list indentation : https://github.com/DavidAnson/markdownlint/blob/v0.34.0/doc/md007.md
   "MD007":
   {
-    // Spaces for indent (4 to match oxfmt's markdown list formatting)
-    "indent": 4,
+    // Spaces for indent (2 to match oxfmt's markdown list formatting with tabWidth 2)
+    "indent": 2,
     // Whether to indent the first level of the list
     "start_indented": false,
     // Spaces for first level indent (when start_indented is set)
