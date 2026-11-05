@@ -4,7 +4,6 @@ import { FlatCompat } from "@eslint/eslintrc";
 import js from "@eslint/js";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
-import prettierConfig from "eslint-config-prettier";
 import _import from "eslint-plugin-import-x";
 import jest from "eslint-plugin-jest";
 import globals from "globals";
@@ -27,8 +26,6 @@ export default [
     "plugin:@typescript-eslint/recommended",
     "plugin:jest/recommended",
   ),
-  // Turn off ESLint rules that conflict with formatting, which oxfmt-next-line owns.
-  prettierConfig,
   {
     plugins:
     {
