@@ -53,9 +53,6 @@ typings/
 # Optional npm cache directory
 .npm
 
-# Optional eslint cache
-.eslintcache
-
 # Optional REPL history
 .node_repl_history
 
@@ -94,10 +91,26 @@ typings/
 .DS_Store
 Thumbs.db
 
-# Ignore built ts files
-__tests__/runner/*
-
 # IDE files
 .idea
 *.code-workspace
 .envrc
+
+# Template baseline (https://github.com/motlin/typescript-template)
+/storybook-static
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+JUSTFILE_BRANCH
+/.vite/
+
+# Local documentation and context
+.llm/
+/.claude/*
+!/.claude/commands/
+!/.claude/includes/
+/.claude/settings.local.json
+
+*storybook.log
+.fallow/

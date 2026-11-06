@@ -11,39 +11,39 @@ it is generated from.
 
 ## Repository Structure
 
-| Path                 | Description                                              |
-| -------------------- | -------------------------------------------------------- |
-| `__fixtures__/`      | Unit Test Fixtures                                       |
-| `__tests__/`         | Unit Tests                                               |
-| `.devcontainer/`     | Development Container Configuration                      |
-| `.github/`           | GitHub Configuration                                     |
-| `.licenses/`         | License Information                                      |
-| `.vscode/`           | Visual Studio Code Configuration                         |
-| `badges/`            | Badges for readme                                        |
-| `dist/`              | Generated JavaScript Code                                |
-| `src/`               | TypeScript Source Code                                   |
-| `.env.example`       | Environment Variables Example for `@github/local-action` |
-| `.licensed.yml`      | Licensed Configuration                                   |
-| `.markdown-lint.yml` | Markdown Linter Configuration                            |
-| `.node-version`      | Node.js Version Configuration                            |
-| `.prettierrc.yml`    | Prettier Formatter Configuration                         |
-| `.yaml-lint.yml`     | YAML Linter Configuration                                |
-| `action.yml`         | GitHub Action Metadata                                   |
-| `CODEOWNERS`         | Code Owners File                                         |
-| `eslint.config.mjs`  | ESLint Configuration                                     |
-| `jest.config.js`     | Jest Configuration                                       |
-| `LICENSE`            | License File                                             |
-| `package.json`       | NPM Package Configuration                                |
-| `README.md`          | Project Documentation                                    |
-| `rollup.config.ts`   | Rollup Bundler Configuration                             |
-| `tsconfig.json`      | TypeScript Configuration                                 |
+| Path                  | Description                                              |
+| --------------------- | -------------------------------------------------------- |
+| `__fixtures__/`       | Unit Test Fixtures                                       |
+| `__tests__/`          | Unit Tests                                               |
+| `.devcontainer/`      | Development Container Configuration                      |
+| `.github/`            | GitHub Configuration                                     |
+| `.licenses/`          | License Information                                      |
+| `.vscode/`            | Visual Studio Code Configuration                         |
+| `badges/`             | Badges for readme                                        |
+| `dist/`               | Generated JavaScript Code                                |
+| `src/`                | TypeScript Source Code                                   |
+| `.env.example`        | Environment Variables Example for `@github/local-action` |
+| `.licensed.yml`       | Licensed Configuration                                   |
+| `.markdownlint.jsonc` | Markdown Linter Configuration                            |
+| `.mise/config.toml`   | Tool Version Configuration (mise)                        |
+| `.oxfmtrc.json`       | oxfmt Formatter Configuration                            |
+| `.yamllint.yaml`      | YAML Linter Configuration                                |
+| `action.yml`          | GitHub Action Metadata                                   |
+| `CODEOWNERS`          | Code Owners File                                         |
+| `justfile`            | Task Recipes (just)                                      |
+| `LICENSE`             | License File                                             |
+| `package.json`        | Package Configuration (pnpm)                             |
+| `README.md`           | Project Documentation                                    |
+| `tsconfig.json`       | TypeScript Configuration                                 |
+| `vite.config.ts`      | Vite+ Configuration (bundling, linting, tasks)           |
 
 ## Environment Setup
 
-Install dependencies by running:
+Tool versions (node, pnpm, just) are pinned in `.mise/config.toml`. Install
+dependencies with pnpm by running:
 
 ```bash
-npm install
+just install
 ```
 
 ## Testing
@@ -51,11 +51,11 @@ npm install
 Ensure all unit tests pass by running:
 
 ```bash
-npm run test
+just test
 ```
 
 Unit tests should exist in the `__tests__` directory. They are powered by
-`jest`. Fixtures should be placed in the `__fixtures__` directory.
+`vitest`. Fixtures should be placed in the `__fixtures__` directory.
 
 ## Bundling
 
@@ -63,7 +63,8 @@ Any time files in the `src` directory are changed, you should run the following
 command to bundle the TypeScript code into JavaScript:
 
 ```bash
-npm run bundle
+just format
+just build
 ```
 
 ## General Coding Guidelines
@@ -80,7 +81,7 @@ npm run bundle
 - Keep functions focused and manageable
 - Use descriptive variable and function names that clearly convey their purpose
 - Use JSDoc comments to document functions, classes, and complex logic
-- After doing any refactoring, ensure to run `npm run test` to ensure that all
+- After doing any refactoring, ensure to run `just test` to ensure that all
   tests still pass and coverage requirements are met
 - When suggesting code changes, always opt for the most maintainable approach.
   Try your best to keep the code clean and follow "Don't Repeat Yourself" (DRY)

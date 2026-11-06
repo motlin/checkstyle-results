@@ -1,34 +1,43 @@
-import { jest, describe, it, expect, beforeEach } from "@jest/globals";
+import { vi, describe, it, expect, beforeEach } from "vite-plus/test";
+
+import type { run as runType } from "../src/main.js";
 
 const coreMock =
 {
-  debug: jest.fn(),
-  warning: jest.fn(),
-  info: jest.fn(),
-  error: jest.fn(),
-  getInput: jest.fn().mockImplementation(() => "**/fake-checkstyle.xml"),
-  setFailed: jest.fn(),
-  setOutput: jest.fn(),
+  debug: vi.fn<(message: string) => void>(),
+  warning: vi.fn<(message: string) => void>(),
+  info: vi.fn<(message: string) => void>(),
+  error: vi.fn<(message: string) => void>(),
+  getInput: vi.fn<(name: string) => string>().mockReturnValue("**/fake-checkstyle.xml"),
+  setFailed: vi.fn<(message: string) => void>(),
+  setOutput: vi.fn<(name: string, value: unknown) => void>(),
   summary:
   {
-    addRaw: jest.fn().mockReturnThis(),
-    write: jest.fn().mockResolvedValue(undefined),
+    addRaw: vi.fn<(text: string) => unknown>().mockReturnThis(),
+    write: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
   },
 };
 
+interface GlobberMock
+{
+  glob: () => Promise<string[]>;
+  globGenerator: () => void;
+}
+
 const globMock =
 {
-  create: jest.fn().mockImplementation(async () => (
-  {
-    glob: jest.fn().mockResolvedValue(["fake.xml"]),
-    globGenerator: jest.fn(),
-  })),
+  create: vi.fn<(pattern: string) => Promise<GlobberMock>>().mockResolvedValue(
+    {
+      glob: vi.fn<() => Promise<string[]>>().mockResolvedValue(["fake.xml"]),
+      globGenerator: vi.fn<() => void>(),
+    },
+  ),
 };
 
 const fsMock =
 {
-  existsSync: jest.fn().mockReturnValue(true),
-  readFileSync: jest.fn().mockReturnValue(`
+  existsSync: vi.fn<(path: string) => boolean>().mockReturnValue(true),
+  readFileSync: vi.fn<(path: string, encoding: string) => string>().mockReturnValue(`
     <checkstyle>
       <file name="SomeFile.java">
         <error line="10" column="2" severity="error" message="Fake error" source="CheckstyleRule"/>
@@ -39,35 +48,41 @@ const fsMock =
 
 const pathMock =
 {
-  relative: jest.fn().mockReturnValue("SomeFile.java"),
+  relative: vi.fn<(from: string, to: string) => string>().mockReturnValue("SomeFile.java"),
 };
 
-const parseStringPromiseMock = jest.fn().mockImplementation(async () => (
+interface CheckstyleErrorMock
 {
-  checkstyle:
+  $: Record<string, string>;
+}
+
+const parseStringPromiseMock = vi.fn<(xml: string) => Promise<unknown>>().mockResolvedValue(
   {
-    file: [
-      {
-        $:
+    checkstyle:
+    {
+      file: [
         {
-          name: "SomeFile.java",
-        },
-        error: [
+          $:
           {
-            $:
-            {
-              line: "10",
-              column: "2",
-              severity: "error",
-              message: "Fake error",
-              source: "CheckstyleRule",
-            },
+            name: "SomeFile.java",
           },
-        ],
-      },
-    ],
+          error: [
+            {
+              $:
+              {
+                line: "10",
+                column: "2",
+                severity: "error",
+                message: "Fake error",
+                source: "CheckstyleRule",
+              },
+            },
+          ],
+        },
+      ],
+    },
   },
-}));
+);
 
 const xml2jsMock =
 {
@@ -75,24 +90,97 @@ const xml2jsMock =
 };
 
 // Set up mocks before importing the module
-jest.unstable_mockModule("@actions/core", () => coreMock);
-jest.unstable_mockModule("@actions/glob", () => globMock);
-jest.unstable_mockModule("fs", () => fsMock);
-jest.unstable_mockModule("xml2js", () => xml2jsMock);
-jest.unstable_mockModule("path", () => pathMock);
+vi.doMock("@actions/core", () => coreMock);
+vi.doMock("@actions/glob", () => globMock);
+vi.doMock("fs", () => fsMock);
+vi.doMock("xml2js", () => xml2jsMock);
+vi.doMock("path", () => pathMock);
 
 // Dynamically import the module under test after mocks are set up
-let run;
+let run: typeof runType;
 
 beforeEach(async () =>
 {
   // Clear all mocks before each test
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 
   // Dynamically import the module to ensure mocks are applied
   const mainModule = await import("../src/main.js");
   run = mainModule.run;
 });
+
+// Builds a report with 15 errors, 15 warnings, and 35 notices, enough to exceed the annotation limits.
+function buildManyViolationsResult(): unknown
+{
+  const mockResult =
+  {
+    checkstyle:
+    {
+      file: [
+        {
+          $:
+          {
+            name: "SomeFile.java",
+          },
+          error: [] as CheckstyleErrorMock[],
+        },
+      ],
+    },
+  };
+
+  // Add 15 errors
+  for (let i = 1; i <= 15; i++)
+  {
+    mockResult.checkstyle.file[0].error.push(
+      {
+        $:
+        {
+          line: String(i),
+          column: "1",
+          severity: "error",
+          message: `Error ${i}`,
+          source: `com.puppycrawl.tools.checkstyle.checks.ErrorCheck${i}`,
+        },
+      },
+    );
+  }
+
+  // Add 15 warnings
+  for (let i = 1; i <= 15; i++)
+  {
+    mockResult.checkstyle.file[0].error.push(
+      {
+        $:
+        {
+          line: String(i),
+          column: "1",
+          severity: "warning",
+          message: `Warning ${i}`,
+          source: `com.puppycrawl.tools.checkstyle.checks.WarningCheck${i}`,
+        },
+      },
+    );
+  }
+
+  // Add 35 notices
+  for (let i = 1; i <= 35; i++)
+  {
+    mockResult.checkstyle.file[0].error.push(
+      {
+        $:
+        {
+          line: String(i),
+          column: "1",
+          severity: "info",
+          message: `Info ${i}`,
+          source: `com.puppycrawl.tools.checkstyle.checks.InfoCheck${i}`,
+        },
+      },
+    );
+  }
+
+  return mockResult;
+}
 
 describe("Checkstyle logic", () =>
 {
@@ -205,75 +293,7 @@ describe("Checkstyle logic", () =>
 
   it("handles annotation limits correctly", async () =>
   {
-    // Create a mock response with many violations
-    const mockResult =
-    {
-      checkstyle:
-      {
-        file: [
-          {
-            $:
-            {
-              name: "SomeFile.java",
-            },
-            error: [],
-          },
-        ],
-      },
-    };
-
-    // Add 15 errors
-    for (let i = 1; i <= 15; i++)
-    {
-      mockResult.checkstyle.file[0].error.push(
-        {
-          $:
-          {
-            line: String(i),
-            column: "1",
-            severity: "error",
-            message: `Error ${i}`,
-            source: `com.puppycrawl.tools.checkstyle.checks.ErrorCheck${i}`,
-          },
-        },
-      );
-    }
-
-    // Add 15 warnings
-    for (let i = 1; i <= 15; i++)
-    {
-      mockResult.checkstyle.file[0].error.push(
-        {
-          $:
-          {
-            line: String(i),
-            column: "1",
-            severity: "warning",
-            message: `Warning ${i}`,
-            source: `com.puppycrawl.tools.checkstyle.checks.WarningCheck${i}`,
-          },
-        },
-      );
-    }
-
-    // Add 35 notices
-    for (let i = 1; i <= 35; i++)
-    {
-      mockResult.checkstyle.file[0].error.push(
-        {
-          $:
-          {
-            line: String(i),
-            column: "1",
-            severity: "info",
-            message: `Info ${i}`,
-            source: `com.puppycrawl.tools.checkstyle.checks.InfoCheck${i}`,
-          },
-        },
-      );
-    }
-
-    parseStringPromiseMock.mockResolvedValueOnce(mockResult);
+    parseStringPromiseMock.mockResolvedValueOnce(buildManyViolationsResult());
 
     await run();
 
@@ -283,6 +303,52 @@ describe("Checkstyle logic", () =>
 
     // We should have set failed because there were errors
     expect(coreMock.setFailed).toHaveBeenCalledWith("Checkstyle reported errors");
+  });
+
+  it("awaits the job summary write before finishing", async () =>
+  {
+    parseStringPromiseMock.mockResolvedValueOnce(buildManyViolationsResult());
+
+    let resolveWrite: (() => void) | undefined;
+    coreMock.summary.write.mockReturnValueOnce(
+      new Promise((resolve) =>
+      {
+        resolveWrite = resolve;
+      }),
+    );
+
+    const running = run();
+
+    await vi.waitFor(() =>
+    {
+      expect(coreMock.summary.write).toHaveBeenCalledTimes(1);
+    });
+    const stillPending = Symbol("pending");
+    const settledEarly = await Promise.race([
+      running,
+      new Promise((resolve) =>
+      {
+        setTimeout(() =>
+        {
+          resolve(stillPending);
+        }, 0);
+      }),
+    ]);
+    expect(settledEarly).toBe(stillPending);
+
+    resolveWrite?.();
+    await running;
+    expect(coreMock.setFailed.mock.calls).toEqual([["Checkstyle reported errors"]]);
+  });
+
+  it("fails the run when the job summary write rejects", async () =>
+  {
+    parseStringPromiseMock.mockResolvedValueOnce(buildManyViolationsResult());
+    coreMock.summary.write.mockRejectedValueOnce(new Error("Summary write failed"));
+
+    await run();
+
+    expect(coreMock.setFailed.mock.calls).toEqual([["Summary write failed"]]);
   });
 
   it("handles malformed XML gracefully", async () =>

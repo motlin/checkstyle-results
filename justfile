@@ -1,49 +1,63 @@
-set shell := ["bash", "-O", "globstar", "-c"]
-set dotenv-filename := ".envrc"
-
-import ".just/console.just"
-import ".just/git.just"
-import ".just/git-rebase.just"
-import ".just/git-test.just"
-
+# `just --list --unsorted`
+[group('default')]
 default:
     @just --list --unsorted
 
-# mise install
-mise:
-    mise install --quiet
-    mise current
+ci := env("CI", "")
 
-# npm install
+export PATH := justfile_directory() / "node_modules/.bin" + ":" + env("PATH")
+
+# Install dependencies
+[group('setup')]
 install:
-    npm install
+    pnpm install
 
-# npm run format:write
-format: mise install
-    npm run format:write
+# Run linter
+lint: install
+    vp lint {{ if ci != "" { "--format github" } else { "--fix" } }}
 
-# npm run lint
-lint: mise install
-    npm run lint
+# Run formatter
+format: install
+    pre-commit run just-fmt --all-files
+    oxfmt-next-line {{ if ci != "" { "--check" } else { "" } }}
 
-# npm run tsc --noEmit
-typecheck: mise install
-    npx tsc --noEmit
+# Run checks (format + lint + typecheck)
+check: format lint typecheck
 
-# npm run test
-test: mise install
-    npm run test
+# Run tests
+test *args: install
+    node node_modules/vitest/dist/cli.js run {{ args }}
 
-# npm run package
-build: mise install
-    npm run package
+# Type-check the project
+typecheck: install
+    vp run typecheck
 
-# format lint typecheck test build
-precommit: format lint typecheck test build
+# Bundle the action into dist/
+build: install
+    vp run package
 
-# npm run all (alias for precommit)
-all: precommit
+# Apply safe Fallow fixes locally, then reject remaining dead code
+fallow: install
+    {{ if ci == "" { "vp run fallow" } else { "true" } }}
+    vp run fallow:ci
 
-# Override this with a command called `woof` which notifies you in whatever ways you prefer.
-# My `woof` command uses `echo`, `say`, and sends a Pushover notification.
-echo_command := env('ECHO_COMMAND', "echo")
+# vp run fallow:ci
+fallow-check: install
+    vp run fallow:ci
+
+# Run pre-commit hooks on all files (same as CI's pre-commit job)
+pre-commit: install
+    pre-commit run --all-files
+
+# Run all pre-commit checks
+[arg("quick", long, value="true", help="Skip tests")]
+verify quick="": check build fallow pre-commit
+    {{ if quick != "true" { "just test" } else { "true" } }}
+    @echo "All pre-commit checks passed!"
+
+# Deprecated alias for `verify`
+[arg("quick", long, value="true", help="Skip tests")]
+precommit quick="": (verify quick)
+
+# Alias for `verify`
+all: verify
