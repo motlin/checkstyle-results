@@ -241,7 +241,7 @@ export async function run(): Promise<void>
         `- Notices: ${counters.notices > limits.notice ? limits.notice : counters.notices} reported${counters.notices > limits.notice ? ` (${counters.notices - limits.notice} omitted)` : ""}`,
       ].join("\n");
 
-      void core.summary.addRaw(summary).write();
+      await core.summary.addRaw(summary).write();
       core.info(
         `CheckStyle found ${counters.total} violations in total, but only ${counters.total - counters.skipped} were reported as annotations due to GitHub limits.`,
       );

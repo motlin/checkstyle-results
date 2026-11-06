@@ -23725,7 +23725,7 @@ async function run() {
 				`- Warnings: ${counters.warnings > limits.warning ? limits.warning : counters.warnings} reported${counters.warnings > limits.warning ? ` (${counters.warnings - limits.warning} omitted)` : ""}`,
 				`- Notices: ${counters.notices > limits.notice ? limits.notice : counters.notices} reported${counters.notices > limits.notice ? ` (${counters.notices - limits.notice} omitted)` : ""}`
 			].join("\n");
-			summary.addRaw(summary$1).write();
+			await summary.addRaw(summary$1).write();
 			info(`CheckStyle found ${counters.total} violations in total, but only ${counters.total - counters.skipped} were reported as annotations due to GitHub limits.`);
 		}
 		if (foundErrors) setFailed("Checkstyle reported errors");
