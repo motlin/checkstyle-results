@@ -22,6 +22,18 @@ export default defineConfig(
     {
       noExternal: true,
     },
+    test:
+    {
+      // Always collect coverage so coverage/coverage-summary.json feeds make-coverage-badge.
+      coverage:
+      {
+        enabled: true,
+        provider: "v8",
+        include: ["src/**"],
+        reportsDirectory: "./coverage",
+        reporter: ["json-summary", "text", "lcov"],
+      },
+    },
     // Formatting runs through oxfmt-next-line (configured in .oxfmtrc.json), not Vite+'s bundled oxfmt.
     check:
     {
