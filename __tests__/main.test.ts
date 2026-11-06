@@ -109,6 +109,79 @@ beforeEach(async () =>
   run = mainModule.run;
 });
 
+// Builds a report with 15 errors, 15 warnings, and 35 notices, enough to exceed the annotation limits.
+function buildManyViolationsResult(): unknown
+{
+  const mockResult =
+  {
+    checkstyle:
+    {
+      file: [
+        {
+          $:
+          {
+            name: "SomeFile.java",
+          },
+          error: [] as CheckstyleErrorMock[],
+        },
+      ],
+    },
+  };
+
+  // Add 15 errors
+  for (let i = 1; i <= 15; i++)
+  {
+    mockResult.checkstyle.file[0].error.push(
+      {
+        $:
+        {
+          line: String(i),
+          column: "1",
+          severity: "error",
+          message: `Error ${i}`,
+          source: `com.puppycrawl.tools.checkstyle.checks.ErrorCheck${i}`,
+        },
+      },
+    );
+  }
+
+  // Add 15 warnings
+  for (let i = 1; i <= 15; i++)
+  {
+    mockResult.checkstyle.file[0].error.push(
+      {
+        $:
+        {
+          line: String(i),
+          column: "1",
+          severity: "warning",
+          message: `Warning ${i}`,
+          source: `com.puppycrawl.tools.checkstyle.checks.WarningCheck${i}`,
+        },
+      },
+    );
+  }
+
+  // Add 35 notices
+  for (let i = 1; i <= 35; i++)
+  {
+    mockResult.checkstyle.file[0].error.push(
+      {
+        $:
+        {
+          line: String(i),
+          column: "1",
+          severity: "info",
+          message: `Info ${i}`,
+          source: `com.puppycrawl.tools.checkstyle.checks.InfoCheck${i}`,
+        },
+      },
+    );
+  }
+
+  return mockResult;
+}
+
 describe("Checkstyle logic", () =>
 {
   it("fails if an 'error' severity is found", async () =>
@@ -220,75 +293,7 @@ describe("Checkstyle logic", () =>
 
   it("handles annotation limits correctly", async () =>
   {
-    // Create a mock response with many violations
-    const mockResult =
-    {
-      checkstyle:
-      {
-        file: [
-          {
-            $:
-            {
-              name: "SomeFile.java",
-            },
-            error: [] as CheckstyleErrorMock[],
-          },
-        ],
-      },
-    };
-
-    // Add 15 errors
-    for (let i = 1; i <= 15; i++)
-    {
-      mockResult.checkstyle.file[0].error.push(
-        {
-          $:
-          {
-            line: String(i),
-            column: "1",
-            severity: "error",
-            message: `Error ${i}`,
-            source: `com.puppycrawl.tools.checkstyle.checks.ErrorCheck${i}`,
-          },
-        },
-      );
-    }
-
-    // Add 15 warnings
-    for (let i = 1; i <= 15; i++)
-    {
-      mockResult.checkstyle.file[0].error.push(
-        {
-          $:
-          {
-            line: String(i),
-            column: "1",
-            severity: "warning",
-            message: `Warning ${i}`,
-            source: `com.puppycrawl.tools.checkstyle.checks.WarningCheck${i}`,
-          },
-        },
-      );
-    }
-
-    // Add 35 notices
-    for (let i = 1; i <= 35; i++)
-    {
-      mockResult.checkstyle.file[0].error.push(
-        {
-          $:
-          {
-            line: String(i),
-            column: "1",
-            severity: "info",
-            message: `Info ${i}`,
-            source: `com.puppycrawl.tools.checkstyle.checks.InfoCheck${i}`,
-          },
-        },
-      );
-    }
-
-    parseStringPromiseMock.mockResolvedValueOnce(mockResult);
+    parseStringPromiseMock.mockResolvedValueOnce(buildManyViolationsResult());
 
     await run();
 
@@ -298,6 +303,52 @@ describe("Checkstyle logic", () =>
 
     // We should have set failed because there were errors
     expect(coreMock.setFailed).toHaveBeenCalledWith("Checkstyle reported errors");
+  });
+
+  it("awaits the job summary write before finishing", async () =>
+  {
+    parseStringPromiseMock.mockResolvedValueOnce(buildManyViolationsResult());
+
+    let resolveWrite: (() => void) | undefined;
+    coreMock.summary.write.mockReturnValueOnce(
+      new Promise((resolve) =>
+      {
+        resolveWrite = resolve;
+      }),
+    );
+
+    const running = run();
+
+    await vi.waitFor(() =>
+    {
+      expect(coreMock.summary.write).toHaveBeenCalledTimes(1);
+    });
+    const stillPending = Symbol("pending");
+    const settledEarly = await Promise.race([
+      running,
+      new Promise((resolve) =>
+      {
+        setTimeout(() =>
+        {
+          resolve(stillPending);
+        }, 0);
+      }),
+    ]);
+    expect(settledEarly).toBe(stillPending);
+
+    resolveWrite?.();
+    await running;
+    expect(coreMock.setFailed.mock.calls).toEqual([["Checkstyle reported errors"]]);
+  });
+
+  it("fails the run when the job summary write rejects", async () =>
+  {
+    parseStringPromiseMock.mockResolvedValueOnce(buildManyViolationsResult());
+    coreMock.summary.write.mockRejectedValueOnce(new Error("Summary write failed"));
+
+    await run();
+
+    expect(coreMock.setFailed.mock.calls).toEqual([["Summary write failed"]]);
   });
 
   it("handles malformed XML gracefully", async () =>
