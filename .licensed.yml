@@ -11,3 +11,9 @@ allowed:
   - mit
   - cc0-1.0
   - other
+
+# BlueOak-1.0.0 is a permissive license used by isaacs packages.
+reviewed:
+  pnpm:
+    - minimatch@*
+    - sax@*

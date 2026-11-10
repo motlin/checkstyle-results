@@ -46,7 +46,7 @@ jobs:
 
       - uses: licensee/setup-licensed@0d52e575b3258417672be0dff2f115d7db8771d8 # v1.3.2
         with:
-          version: 4.x
+          version: 5.x
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       # If this is a workflow_dispatch event, update the cached licenses.
@@ -64,7 +64,11 @@ jobs:
         run: |
           git config --local user.email "licensed-ci@users.noreply.github.com"
           git config --local user.name "licensed-ci"
-          git add .
+          git add .licenses
+          if git diff --cached --quiet; then
+            echo "No license changes to commit"
+            exit 0
+          fi
           git commit -m "Auto-update license files"
           git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}"
 
