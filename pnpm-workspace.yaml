@@ -2,11 +2,12 @@ minimumReleaseAge: 1440
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false
 catalog:
-  vite: npm:@voidzero-dev/vite-plus-core@1.1.0
-  # vite-plus 1.1.0 bundles vitest 5.0.3 and refuses a coverage provider of any other version.
-  vitest: 5.0.3
-  "@vitest/coverage-v8": 5.0.3
-  vite-plus: 1.1.0
+  vite: npm:@voidzero-dev/vite-plus-core@1.3.0
+  # vite-plus 1.3.0 bundles vitest 5.0.5 and refuses a coverage provider of any other version.
+  # Bump vitest and @vitest/coverage-v8 only together with vite-plus, to its bundled vitest version.
+  vitest: 5.0.5
+  "@vitest/coverage-v8": 5.0.5
+  vite-plus: 1.3.0
 overrides:
   vite: "catalog:"
   vitest: "catalog:"

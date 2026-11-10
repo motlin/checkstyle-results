@@ -17,8 +17,8 @@
       "groupName": "pnpm"
     },
     {
-      "description": "Gap 2: vite-plus, its npm: alias (shows up as `vite`) and the vite-plus-core override move together.",
-      "matchPackageNames": ["vite-plus", "@voidzero-dev/vite-plus-core", "vite"],
+      "description": "Gap 2: vite-plus, its npm: alias (shows up as `vite`), the vite-plus-core override, and vitest plus @vitest/coverage-v8 (pinned to vite-plus's bundled vitest) move together.",
+      "matchPackageNames": ["vite-plus", "@voidzero-dev/vite-plus-core", "vite", "vitest", "@vitest/coverage-v8"],
       "enabled": true,
       "groupName": "vite-plus monorepo"
     }
