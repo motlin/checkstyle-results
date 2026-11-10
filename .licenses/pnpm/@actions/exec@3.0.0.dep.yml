@@ -1,9 +1,9 @@
 ---
-name: "@actions/core"
-version: 1.11.1
-type: npm
-summary: Actions core lib
-homepage: https://github.com/actions/toolkit/tree/main/packages/core
+name: "@actions/exec"
+version: 3.0.0
+type: pnpm
+summary: Actions exec lib
+homepage: https://github.com/actions/toolkit/tree/main/packages/exec
 license: mit
 licenses:
 - sources: LICENSE.md

@@ -1,9 +1,9 @@
 ---
-name: "@actions/exec"
-version: 1.1.1
-type: npm
-summary: Actions exec lib
-homepage: https://github.com/actions/toolkit/tree/main/packages/exec
+name: "@actions/io"
+version: 3.0.2
+type: pnpm
+summary: Actions io lib
+homepage: https://github.com/actions/toolkit/tree/main/packages/io
 license: mit
 licenses:
 - sources: LICENSE.md
