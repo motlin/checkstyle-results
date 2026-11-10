@@ -12,8 +12,11 @@ updates:
     labels:
       - "dependencies"
     # Renovate's "vite-plus monorepo" group owns vite-plus so its vite alias moves with it.
+    # vitest and @vitest/coverage-v8 must match the vitest that vite-plus bundles, so they move in that group too.
     ignore:
       - dependency-name: "vite-plus"
+      - dependency-name: "vitest"
+      - dependency-name: "@vitest/coverage-v8"
     # Only group dependencies that must move in lockstep.
     groups:
       vite-ecosystem:
