@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   licensed:
@@ -55,12 +56,17 @@ jobs:
         id: update-licenses
         run: licensed cache
 
-      # Then, commit the updated licenses to the repository.
+      # Then, open a pull request with the updated licenses. main is protected
+      # (required status checks), so pushing to it directly would be rejected.
+      # PRs created with GITHUB_TOKEN do not trigger workflow runs, so checks on
+      # the PR need a manual re-run (or close and reopen the PR).
       - if: ${{ github.event_name == 'workflow_dispatch' }}
-        name: Commit Licenses
-        id: commit-licenses
+        name: Open License Pull Request
+        id: open-license-pr
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: licensed/update-${{ github.run_id }}
         run: |
           git config --local user.email "licensed-ci@users.noreply.github.com"
           git config --local user.name "licensed-ci"
@@ -69,8 +75,16 @@ jobs:
             echo "No license changes to commit"
             exit 0
           fi
+          git switch --create "${BRANCH}"
           git commit -m "Auto-update license files"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${GITHUB_REF_NAME}"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${BRANCH}"
+          gh pr create \
+            --base "${GITHUB_REF_NAME}" \
+            --head "${BRANCH}" \
+            --title "Auto-update license files" \
+            --body "Updated .licenses from \`licensed cache\` in workflow run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}.
+
+          This PR was created with GITHUB_TOKEN, which does not trigger workflow runs. Re-run the checks manually, or close and reopen this PR, before merging."
 
       # Last, check the status of the cached licenses.
       - name: Check Licenses
