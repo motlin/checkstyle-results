@@ -55,7 +55,7 @@
     "@types/node": "^26.6.5",
     "@types/xml2js": "^0.4.14",
     "@vitest/coverage-v8": "catalog:",
-    "fallow": "^3.42.0",
+    "fallow": "^3.43.1",
     "make-coverage-badge": "^1.2.0",
     "markdownlint-cli2": "^0.24.1",
     "typescript": "^7.0.2",
